@@ -39,8 +39,8 @@
     "menu.checkForUpdates": "Controlla Aggiornamenti",
     "menu.fetchFreeApis": "Carica API Gratuite",
     "menu.settings": "Impostazioni",
-    "menu.remove.confirm": " vuoi Rimuovere LuaTools per questo gioco?",
-    "menu.remove.success": "LuaTools a rimosso  questa app con sucesso.",
+    "menu.remove.confirm": "Vuoi rimuovere LuaTools per questo gioco?",
+    "menu.remove.success": "LuaTools ha rimosso questa app con successo.",
     "menu.remove.failure": "Impossibile rimuovere LuaTools.",
     "menu.error.noAppId": "Impossibile determinare l'AppID del gioco",
     "menu.error.noInstall": "Impossibile trovare l'installazione del gioco",
@@ -129,8 +129,5 @@
     "Restart Steam": "Riavvia Steam",
     "Add via LuaTools": "Aggiungi tramite LuaTools",
     "Are you sure?": "Sei sicuro?"
-  }
-}
-re you sure?": "Sei sicuro?"
   }
 }
