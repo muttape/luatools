@@ -3,3 +3,4 @@ backend/api.json
 backend/loadedappids.txt
 backend/loadedappids.txt
 backend/data/settings.json
+backend/locales/check_indent.py

@@ -1,4 +1,5 @@
-"_meta": {
+{
+  "_meta": {
     "code": "ru",
     "name": "Russian",
     "nativeName": "Русский",
@@ -130,4 +131,3 @@
     "Are you sure?": "Вы уверены?"
   }
 }
-

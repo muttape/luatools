@@ -67,8 +67,6 @@
     "Applying {fix}": "Εφαρμογή {fix}",
     "Failed: {error}": "Απέτυχε: {error}",
     "Unknown error": "Άγνωστο σφάλμα",
-
-
     "Loading fixes...": "Φόρτωση διορθώσεων...",
     "Fetching game name...": "Αναζήτηση ονόματος παιχνιδιού...",
     "Checking generic fix...": "Έλεγχος γενικής διόρθωσης...",
