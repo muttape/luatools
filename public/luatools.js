@@ -46,12 +46,45 @@
         window.__LuaToolsI18n = stored;
     }
 
-    function ensureLuaToolsAnimations() {
-        if (document.getElementById('luatools-animations')) return;
+    function ensureLuaToolsStyles() {
+        if (document.getElementById('luatools-styles')) return;
         try {
             const style = document.createElement('style');
-            style.id = 'luatools-animations';
+            style.id = 'luatools-styles';
             style.textContent = `
+                .luatools-btn {
+                    padding: 12px 24px;
+                    background: rgba(102,192,244,0.15);
+                    border: 2px solid rgba(102,192,244,0.4);
+                    border-radius: 12px;
+                    color: #66c0f4;
+                    font-size: 15px;
+                    font-weight: 600;
+                    text-decoration: none;
+                    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    cursor: pointer;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    letter-spacing: 0.3px;
+                }
+                .luatools-btn:hover:not([data-disabled="1"]) {
+                    background: rgba(102,192,244,0.25);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(102,192,244,0.3);
+                    border-color: #66c0f4;
+                }
+                .luatools-btn.primary {
+                    background: linear-gradient(135deg, #66c0f4 0%, #4a9ece 100%);
+                    border-color: #66c0f4;
+                    color: #0f1923;
+                    font-weight: 700;
+                    box-shadow: 0 4px 15px rgba(102,192,244,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                }
+                .luatools-btn.primary:hover:not([data-disabled="1"]) {
+                    background: linear-gradient(135deg, #7dd4ff 0%, #5ab3e8 100%);
+                    transform: translateY(-3px) scale(1.03);
+                    box-shadow: 0 8px 25px rgba(102,192,244,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+                }
                 @keyframes fadeIn {
                     from { opacity: 0; }
                     to { opacity: 1; }
@@ -72,7 +105,7 @@
                 }
             `;
             document.head.appendChild(style);
-        } catch(err) { backendLog('LuaTools: Animations injection failed: ' + err); }
+        } catch(err) { backendLog('LuaTools: Styles injection failed: ' + err); }
     }
 
     function ensureFontAwesome() {
@@ -97,7 +130,7 @@
             if (document.querySelector('.luatools-settings-overlay')) return;
 
             try { const d = document.querySelector('.luatools-overlay'); if (d) d.remove(); } catch(_) {}
-            ensureLuaToolsAnimations();
+            ensureLuaToolsStyles();
             ensureFontAwesome();
 
             const overlay = document.createElement('div');
@@ -261,17 +294,13 @@
 
                         Millennium.callServerMethod('luatools', 'GetGameInstallPath', { appid, contentScriptQuery: '' }).then(function(pathRes){
                             try {
+                                let isGameInstalled = false;
                                 const pathPayload = typeof pathRes === 'string' ? JSON.parse(pathRes) : pathRes;
-                                if (!pathPayload || !pathPayload.success) {
-                                    try { overlay.remove(); } catch(_) {}
-                                    const errorKey = (pathPayload && pathPayload.error) ? String(pathPayload.error) : 'menu.error.noInstall';
-                                    const errorMsg = (errorKey.startsWith('menu.error.') || errorKey.startsWith('common.')) ? t(errorKey) : errorKey;
-                                    ShowLuaToolsAlert('LuaTools', errorMsg);
-                                    return;
+                                if (pathPayload && pathPayload.success && pathPayload.installPath) {
+                                    isGameInstalled = true;
+                                    window.__LuaToolsGameInstallPath = pathPayload.installPath;
                                 }
-
-                                window.__LuaToolsGameInstallPath = pathPayload.installPath;
-
+                                window.__LuaToolsGameIsInstalled = isGameInstalled;
                                 try { overlay.remove(); } catch(_) {}
                                 showFixesLoadingPopupAndCheck(appid);
                             } catch(err) {
@@ -298,19 +327,7 @@
                             const payload = typeof res === 'string' ? JSON.parse(res) : res;
                             const exists = !!(payload && payload.success && payload.exists === true);
                             if (exists) {
-                                removeBtn.style.display = 'flex';
-                                removeBtn.onclick = function(e){
-                                    e.preventDefault();
-                                    closeSettingsOverlay();
-                                    const reopen = function(){ try { showSettingsPopup(); } catch(_) {} };
-                                    const confirmMessage = t('menu.remove.confirm', 'Remove via LuaTools for this game?');
-                                    showLuaToolsConfirm('LuaTools', confirmMessage, function(){
-                                        doDelete();
-                                    }, function(){
-                                        reopen();
-                                    });
-                                };
-                                function doDelete(){
+                                const doDelete = function() {
                                     try {
                                         Millennium.callServerMethod('luatools', 'DeleteLuaToolsForApp', { appid, contentScriptQuery: '' }).then(function(){
                                             try {
@@ -318,17 +335,32 @@
                                                 window.__LuaToolsPresenceCheckInFlight = false;
                                                 window.__LuaToolsPresenceCheckAppId = undefined;
                                                 addLuaToolsButton();
-                                            } catch(_) {}
-                                        }).then(function(){
-                                            const successText = t('menu.remove.success', 'LuaTools removed for this app.');
-                                            ShowLuaToolsAlert('LuaTools', successText);
+                                                const successText = t('menu.remove.success', 'LuaTools removed for this app.');
+                                                ShowLuaToolsAlert('LuaTools', successText);
+                                            } catch(err) {
+                                                backendLog('LuaTools: post-delete cleanup failed: ' + err);
+                                            }
                                         }).catch(function(err){
                                             const failureText = t('menu.remove.failure', 'Failed to remove LuaTools.');
                                             const errMsg = (err && err.message) ? err.message : failureText;
                                             ShowLuaToolsAlert('LuaTools', errMsg);
                                         });
-                                    } catch(_) {}
-                                }
+                                    } catch(err) {
+                                        backendLog('LuaTools: doDelete failed: ' + err);
+                                    }
+                                };
+
+                                removeBtn.style.display = 'flex';
+                                removeBtn.onclick = function(e){
+                                    e.preventDefault();
+                                    try { overlay.remove(); } catch(_) {}
+                                    const confirmMessage = t('menu.remove.confirm', 'Remove via LuaTools for this game?');
+                                    showLuaToolsConfirm('LuaTools', confirmMessage, function(){
+                                        doDelete();
+                                    }, function(){
+                                        try { showSettingsPopup(); } catch(_) {}
+                                    });
+                                };
                             } else {
                                 removeBtn.style.display = 'none';
                             }
@@ -410,8 +442,8 @@
         if (document.querySelector('.luatools-overlay')) return;
         // Close settings popup if open so modals don't overlap
         try { const s = document.querySelector('.luatools-settings-overlay'); if (s) s.remove(); } catch(_) {}
-
-        ensureLuaToolsAnimations();
+        
+        ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -447,13 +479,13 @@
         btnRow.style.cssText = 'margin-top:16px;display:flex;gap:8px;justify-content:flex-end;';
         const cancelBtn = document.createElement('a');
         cancelBtn.className = 'btnv6_blue_hoverfade btn_medium luatools-cancel-btn';
-        cancelBtn.innerHTML = '<span>' + lt('Cancel') + '</span>';
+        cancelBtn.innerHTML = `<span>${lt('Cancel')}</span>`;
         cancelBtn.href = '#';
         cancelBtn.style.display = 'none';
         cancelBtn.onclick = function(e){ e.preventDefault(); cancelOperation(); };
         const hideBtn = document.createElement('a');
         hideBtn.className = 'btnv6_blue_hoverfade btn_medium luatools-hide-btn';
-        hideBtn.innerHTML = '<span>' + lt('Hide') + '</span>';
+        hideBtn.innerHTML = `<span>${lt('Hide')}</span>`;
         hideBtn.href = '#';
         hideBtn.onclick = function(e){ e.preventDefault(); cleanup(); };
         btnRow.appendChild(cancelBtn);
@@ -486,7 +518,7 @@
             const cancelBtn = overlay.querySelector('.luatools-cancel-btn');
             if (cancelBtn) cancelBtn.style.display = 'none';
             const hideBtn = overlay.querySelector('.luatools-hide-btn');
-            if (hideBtn) hideBtn.innerHTML = '<span>' + lt('Close') + '</span>';
+            if (hideBtn) hideBtn.innerHTML = `<span>${lt('Close')}</span>`;
             // Hide progress UI
             const wrap = overlay.querySelector('.luatools-progress-wrap');
             const percent = overlay.querySelector('.luatools-percent');
@@ -499,15 +531,15 @@
     }
 
     // Fixes Results popup
-    function showFixesResultsPopup(data) {
+    function showFixesResultsPopup(data, isGameInstalled) {
         if (document.querySelector('.luatools-fixes-results-overlay')) return;
         // Close other popups
         try { const d = document.querySelector('.luatools-overlay'); if (d) d.remove(); } catch(_) {}
         try { const s = document.querySelector('.luatools-settings-overlay'); if (s) s.remove(); } catch(_) {}
-        try { const f = document.querySelector('.luatools-fixes-overlay'); if (f) f.remove(); } catch(_) {}
+        try { const f = document.querySelector('.luatools-fixes-results-overlay'); if (f) f.remove(); } catch(_) {}
         try { const l = document.querySelector('.luatools-loading-fixes-overlay'); if (l) l.remove(); } catch(_) {}
 
-        ensureLuaToolsAnimations();
+        ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-fixes-results-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -626,13 +658,18 @@
             genericStatus === 200 ? true : false,
             function(e) {
                 e.preventDefault();
-                if (genericStatus === 200) {
+                if (genericStatus === 200 && isGameInstalled) {
                     const genericUrl = 'https://github.com/ShayneVi/Bypasses/releases/download/v1.0/' + data.appid + '.zip';
                     applyFix(data.appid, genericUrl, lt('Generic Fix'), data.gameName, overlay);
                 }
             }
         );
         leftColumn.appendChild(genericSection);
+
+        if (!isGameInstalled) {
+            genericSection.querySelector('a').style.opacity = '0.5';
+            genericSection.querySelector('a').style.cursor = 'not-allowed';
+        }
 
         const onlineStatus = data.onlineFix.status;
         const onlineSection = createFixButton(
@@ -642,13 +679,18 @@
             onlineStatus === 200 ? true : false,
             function(e) {
                 e.preventDefault();
-                if (onlineStatus === 200) {
+                if (onlineStatus === 200 && isGameInstalled) {
                     const onlineUrl = data.onlineFix.url || ('https://github.com/ShayneVi/OnlineFix1/releases/download/fixes/' + data.appid + '.zip');
                     applyFix(data.appid, onlineUrl, lt('Online Fix'), data.gameName, overlay);
                 }
             }
         );
         leftColumn.appendChild(onlineSection);
+
+        if (!isGameInstalled) {
+            onlineSection.querySelector('a').style.opacity = '0.5';
+            onlineSection.querySelector('a').style.cursor = 'not-allowed';
+        }
 
         // right
         const aioSection = createFixButton(
@@ -658,11 +700,17 @@
             null, // default blue button
             function(e) {
                 e.preventDefault();
-                const downloadUrl = 'https://github.com/madoiscool/lt_api_links/releases/download/unsteam/Win64.zip';
-                applyFix(data.appid, downloadUrl, lt('Online Fix (Unsteam)'), data.gameName, overlay);
+                if (isGameInstalled) {
+                    const downloadUrl = 'https://github.com/madoiscool/lt_api_links/releases/download/unsteam/Win64.zip';
+                    applyFix(data.appid, downloadUrl, lt('Online Fix (Unsteam)'), data.gameName, overlay);
+                }
             }
         );
         rightColumn.appendChild(aioSection);
+        if (!isGameInstalled) {
+            aioSection.querySelector('a').style.opacity = '0.5';
+            aioSection.querySelector('a').style.cursor = 'not-allowed';
+        }
 
         const unfixSection = createFixButton(
             lt('Manage Game'),
@@ -671,14 +719,20 @@
             null, // ^^
             function(e) {
                 e.preventDefault();
-                try { overlay.remove(); } catch(_) {}
-                showLuaToolsConfirm('LuaTools', lt('Are you sure you want to un-fix? This will remove fix files and verify game files.'),
-                    function() { startUnfix(data.appid); },
-                    function() { showFixesResultsPopup(data); }
-                );
+                if (isGameInstalled) {
+                    try { overlay.remove(); } catch(_) {}
+                    showLuaToolsConfirm('LuaTools', lt('Are you sure you want to un-fix? This will remove fix files and verify game files.'),
+                        function() { startUnfix(data.appid); },
+                        function() { showFixesResultsPopup(data, isGameInstalled); }
+                    );
+                }
             }
         );
         rightColumn.appendChild(unfixSection);
+        if (!isGameInstalled) {
+            unfixSection.querySelector('a').style.opacity = '0.5';
+            unfixSection.querySelector('a').style.cursor = 'not-allowed';
+        }
 
         // Credit message
         const creditMsg = document.createElement('div');
@@ -703,6 +757,14 @@
         gameHeader.appendChild(gameIcon);
         gameHeader.appendChild(gameName);
         contentContainer.appendChild(gameHeader);
+
+        if (!isGameInstalled) {
+            const notInstalledWarning = document.createElement('div');
+            notInstalledWarning.style.cssText = 'margin-bottom: 16px; padding: 12px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 6px; color: #ffc107; font-size: 13px; text-align: center;';
+            notInstalledWarning.innerHTML = '<i class="fa-solid fa-circle-info" style="margin-right: 8px;"></i>' + t('menu.error.notInstalled', 'Game is not installed');
+            contentContainer.appendChild(notInstalledWarning);
+        }
+
         columnsContainer.appendChild(leftColumn);
         columnsContainer.appendChild(rightColumn);
         contentContainer.appendChild(columnsContainer);
@@ -720,7 +782,7 @@
         rightButtons.style.cssText = 'display:flex;gap:8px;';
         const gameFolderBtn = document.createElement('a');
         gameFolderBtn.className = 'btnv6_blue_hoverfade btn_medium';
-        gameFolderBtn.innerHTML = '<span><i class="fa-solid fa-folder" style="margin-right: 8px;"></i>' + lt('Game folder') + '</span>';
+        gameFolderBtn.innerHTML = `<span><i class="fa-solid fa-folder" style="margin-right: 8px;"></i>${lt('Game folder')}</span>`;
         gameFolderBtn.href = '#';
         gameFolderBtn.onclick = function(e){ 
             e.preventDefault(); 
@@ -761,7 +823,7 @@
         settingsBtn.onclick = function(e) {
             e.preventDefault();
             try { overlay.remove(); } catch(_) {}
-            showSettingsManagerPopup(false, function() { showFixesResultsPopup(data); });
+            showSettingsManagerPopup(false, function() { showFixesResultsPopup(data, isGameInstalled); });
         };
 
         function startUnfix(appid) {
@@ -789,7 +851,7 @@
         try { const s = document.querySelector('.luatools-settings-overlay'); if (s) s.remove(); } catch(_) {}
         try { const f = document.querySelector('.luatools-fixes-overlay'); if (f) f.remove(); } catch(_) {}
 
-        ensureLuaToolsAnimations();
+        ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-loading-fixes-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -829,7 +891,8 @@
         Millennium.callServerMethod('luatools', 'CheckForFixes', { appid, contentScriptQuery: '' }).then(function(res){
             const payload = typeof res === 'string' ? JSON.parse(res) : res;
             if (payload && payload.success) {
-                showFixesResultsPopup(payload);
+                const isGameInstalled = window.__LuaToolsGameIsInstalled === true;
+                showFixesResultsPopup(payload, isGameInstalled);
             } else {
                 const errText = (payload && payload.error) ? String(payload.error) : lt('Failed to check for fixes.');
                 ShowLuaToolsAlert('LuaTools', errText);
@@ -905,7 +968,7 @@
         // Reuse the download popup UI from Add via LuaTools
         if (document.querySelector('.luatools-overlay')) return;
 
-        ensureLuaToolsAnimations();
+        ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;';
@@ -927,19 +990,17 @@
 
         const hideBtn = document.createElement('a');
         hideBtn.href = '#';
-        hideBtn.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;padding:14px 28px;background:rgba(139,139,139,0.15);border:1px solid rgba(139,139,139,0.3);border-radius:12px;color:#c7d5e0;font-size:15px;font-weight:500;text-decoration:none;transition:all 0.3s ease;cursor:pointer;';
-        hideBtn.innerHTML = '<span>' + lt('Hide') + '</span>';
-        hideBtn.onmouseover = function() { this.style.background = 'rgba(139,139,139,0.25)'; this.style.transform = 'translateY(-2px)'; this.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)'; };
-        hideBtn.onmouseout = function() { this.style.background = 'rgba(139,139,139,0.15)'; this.style.transform = 'translateY(0)'; this.style.boxShadow = 'none'; };
+        hideBtn.className = 'luatools-btn';
+        hideBtn.style.flex = '1';
+        hideBtn.innerHTML = `<span>${lt('Hide')}</span>`;
         hideBtn.onclick = function(e){ e.preventDefault(); overlay.remove(); };
         btnRow.appendChild(hideBtn);
 
         const cancelBtn = document.createElement('a');
         cancelBtn.href = '#';
-        cancelBtn.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;padding:14px 28px;background:linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%);border:1px solid #66c0f4;border-radius:12px;color:#fff;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.3s ease;cursor:pointer;box-shadow:0 0 20px rgba(102,192,244,0.3);';
-        cancelBtn.innerHTML = '<span>' + lt('Cancel') + '</span>';
-        cancelBtn.onmouseover = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.5) 0%, rgba(102,192,244,0.3) 100%)'; this.style.transform = 'translateY(-2px) scale(1.02)'; this.style.boxShadow = '0 12px 30px rgba(102,192,244,0.5)'; };
-        cancelBtn.onmouseout = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%)'; this.style.transform = 'translateY(0) scale(1)'; this.style.boxShadow = '0 0 20px rgba(102,192,244,0.3)'; };
+        cancelBtn.className = 'luatools-btn primary';
+        cancelBtn.style.flex = '1';
+        cancelBtn.innerHTML = `<span>${lt('Cancel')}</span>`;
         cancelBtn.onclick = function(e){
             e.preventDefault();
             if (cancelBtn.dataset.pending === '1') return;
@@ -991,13 +1052,12 @@
         const btnRow = overlayEl.querySelector('.lt-fix-btn-row');
         if (!btnRow) return;
         btnRow.innerHTML = '';
-        btnRow.style.cssText = 'margin-top:16px;display:flex;justify-content:center;';
+        btnRow.style.cssText = 'margin-top:16px;display:flex;justify-content:flex-end;';
         const closeBtn = document.createElement('a');
         closeBtn.href = '#';
-        closeBtn.style.cssText = 'min-width:140px;display:flex;align-items:center;justify-content:center;padding:14px 32px;background:linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%);border:1px solid #66c0f4;border-radius:12px;color:#fff;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.3s ease;cursor:pointer;box-shadow:0 0 20px rgba(102,192,244,0.3);';
-        closeBtn.innerHTML = '<span>' + lt('Close') + '</span>';
-        closeBtn.onmouseover = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.5) 0%, rgba(102,192,244,0.3) 100%)'; this.style.transform = 'translateY(-2px) scale(1.02)'; this.style.boxShadow = '0 12px 30px rgba(102,192,244,0.5)'; };
-        closeBtn.onmouseout = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%)'; this.style.transform = 'translateY(0) scale(1)'; this.style.boxShadow = '0 0 20px rgba(102,192,244,0.3)'; };
+        closeBtn.className = 'luatools-btn primary';
+        closeBtn.style.minWidth = '140px';
+        closeBtn.innerHTML = `<span>${lt('Close')}</span>`;
         closeBtn.onclick = function(e){ e.preventDefault(); overlayEl.remove(); };
         btnRow.appendChild(closeBtn);
     }
@@ -1056,7 +1116,7 @@
         // Remove any existing popup
         try { const old = document.querySelector('.luatools-unfix-overlay'); if (old) old.remove(); } catch(_) {}
 
-        ensureLuaToolsAnimations();
+        ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-unfix-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;';
@@ -1076,10 +1136,9 @@
         btnRow.style.cssText = 'margin-top:16px;display:flex;justify-content:center;';
         const hideBtn = document.createElement('a');
         hideBtn.href = '#';
-        hideBtn.style.cssText = 'min-width:140px;display:flex;align-items:center;justify-content:center;padding:14px 32px;background:rgba(139,139,139,0.15);border:1px solid rgba(139,139,139,0.3);border-radius:12px;color:#c7d5e0;font-size:15px;font-weight:500;text-decoration:none;transition:all 0.3s ease;cursor:pointer;';
-        hideBtn.innerHTML = '<span>' + lt('Hide') + '</span>';
-        hideBtn.onmouseover = function() { this.style.background = 'rgba(139,139,139,0.25)'; this.style.transform = 'translateY(-2px)'; this.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)'; };
-        hideBtn.onmouseout = function() { this.style.background = 'rgba(139,139,139,0.15)'; this.style.transform = 'translateY(0)'; this.style.boxShadow = 'none'; };
+        hideBtn.className = 'luatools-btn';
+        hideBtn.style.minWidth = '140px';
+        hideBtn.innerHTML = `<span>${lt('Hide')}</span>`;
         hideBtn.onclick = function(e){ e.preventDefault(); overlay.remove(); };
         btnRow.appendChild(hideBtn);
 
@@ -1116,15 +1175,14 @@
                                 if (msgEl) msgEl.textContent = lt('Removed {count} files. Running Steam verification...').replace('{count}', filesRemoved);
                                 // Change Hide button to Close button
                                 try {
-                                    const btnRow = overlayEl.querySelector('div[style*="justify-content:center"]');
+                                    const btnRow = overlayEl.querySelector('div[style*="justify-content:flex-end"]');
                                     if (btnRow) {
                                         btnRow.innerHTML = '';
                                         const closeBtn = document.createElement('a');
                                         closeBtn.href = '#';
-                                        closeBtn.style.cssText = 'min-width:140px;display:flex;align-items:center;justify-content:center;padding:14px 32px;background:linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%);border:1px solid #66c0f4;border-radius:12px;color:#fff;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.3s ease;cursor:pointer;box-shadow:0 0 20px rgba(102,192,244,0.3);';
-                                        closeBtn.innerHTML = '<span>' + lt('Close') + '</span>';
-                                        closeBtn.onmouseover = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.5) 0%, rgba(102,192,244,0.3) 100%)'; this.style.transform = 'translateY(-2px) scale(1.02)'; this.style.boxShadow = '0 12px 30px rgba(102,192,244,0.5)'; };
-                                        closeBtn.onmouseout = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%)'; this.style.transform = 'translateY(0) scale(1)'; this.style.boxShadow = '0 0 20px rgba(102,192,244,0.3)'; };
+                                        closeBtn.className = 'luatools-btn primary';
+                                        closeBtn.style.minWidth = '140px';
+                                        closeBtn.innerHTML = `<span>${lt('Close')}</span>`;
                                         closeBtn.onclick = function(e){ e.preventDefault(); overlayEl.remove(); };
                                         btnRow.appendChild(closeBtn);
                                     }
@@ -1144,15 +1202,14 @@
                                 if (msgEl) msgEl.textContent = lt('Failed: {error}').replace('{error}', state.error || lt('Unknown error'));
                                 // Change Hide button to Close button
                                 try {
-                                    const btnRow = overlayEl.querySelector('div[style*="justify-content:center"]');
+                                    const btnRow = overlayEl.querySelector('div[style*="justify-content:flex-end"]');
                                     if (btnRow) {
                                         btnRow.innerHTML = '';
                                         const closeBtn = document.createElement('a');
                                         closeBtn.href = '#';
-                                        closeBtn.style.cssText = 'min-width:140px;display:flex;align-items:center;justify-content:center;padding:14px 32px;background:linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%);border:1px solid #66c0f4;border-radius:12px;color:#fff;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.3s ease;cursor:pointer;box-shadow:0 0 20px rgba(102,192,244,0.3);';
-                                        closeBtn.innerHTML = '<span>' + lt('Close') + '</span>';
-                                        closeBtn.onmouseover = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.5) 0%, rgba(102,192,244,0.3) 100%)'; this.style.transform = 'translateY(-2px) scale(1.02)'; this.style.boxShadow = '0 12px 30px rgba(102,192,244,0.5)'; };
-                                        closeBtn.onmouseout = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%)'; this.style.transform = 'translateY(0) scale(1)'; this.style.boxShadow = '0 0 20px rgba(102,192,244,0.3)'; };
+                                        closeBtn.className = 'luatools-btn primary';
+                                        closeBtn.style.minWidth = '140px';
+                                        closeBtn.innerHTML = `<span>${lt('Close')}</span>`;
                                         closeBtn.onclick = function(e){ e.preventDefault(); overlayEl.remove(); };
                                         btnRow.appendChild(closeBtn);
                                     }
@@ -1238,60 +1295,49 @@
 
         try { const mainOverlay = document.querySelector('.luatools-settings-overlay'); if (mainOverlay) mainOverlay.remove(); } catch(_) {}
 
-        ensureLuaToolsAnimations();
+        ensureLuaToolsStyles();
         ensureFontAwesome();
 
         const overlay = document.createElement('div');
         overlay.className = 'luatools-settings-manager-overlay';
-        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:100000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:100000;display:flex;align-items:center;justify-content:center;';
 
         const modal = document.createElement('div');
-        modal.style.cssText = 'position:relative;background:linear-gradient(165deg, #0f1923 0%, #1b2838 50%, #2a475e 100%);color:#fff;border:2px solid #4a9ece;border-radius:16px;min-width:650px;max-width:750px;max-height:85vh;display:flex;flex-direction:column;padding:0;box-shadow:0 25px 80px rgba(0,0,0,.95), 0 0 0 1px rgba(74,158,206,0.5), inset 0 1px 0 rgba(255,255,255,0.1);animation:slideUp 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);overflow:hidden;';
+        modal.style.cssText = 'position:relative;background:linear-gradient(135deg, #1b2838 0%, #2a475e 100%);color:#fff;border:2px solid #66c0f4;border-radius:8px;min-width:650px;max-width:750px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.8), 0 0 0 1px rgba(102,192,244,0.3);animation:slideUp 0.1s ease-out;overflow:hidden;';
 
         const header = document.createElement('div');
-        header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:24px 32px;background:linear-gradient(135deg, rgba(102,192,244,0.15) 0%, rgba(74,158,206,0.08) 100%);border-bottom:2px solid rgba(74,158,206,0.4);backdrop-filter:blur(10px);position:relative;overflow:hidden;';
-
-        const headerGlow = document.createElement('div');
-        headerGlow.style.cssText = 'position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle, rgba(102,192,244,0.15) 0%, transparent 70%);pointer-events:none;';
-        header.appendChild(headerGlow);
+        header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:28px 32px 16px;border-bottom:2px solid rgba(102,192,244,0.3);';
 
         const title = document.createElement('div');
-        title.style.cssText = 'font-size:28px;color:#fff;font-weight:800;text-shadow:0 2px 12px rgba(102,192,244,0.6), 0 0 30px rgba(102,192,244,0.3);background:linear-gradient(135deg, #66c0f4 0%, #a4d7f5 50%, #66c0f4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1;';
+        title.style.cssText = 'font-size:24px;color:#fff;font-weight:700;text-shadow:0 2px 8px rgba(102,192,244,0.4);background:linear-gradient(135deg, #66c0f4 0%, #a4d7f5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;';
         title.textContent = t('settings.title', 'LuaTools · Settings');
 
         const iconButtons = document.createElement('div');
-        iconButtons.style.cssText = 'display:flex;gap:10px;position:relative;z-index:1;';
+        iconButtons.style.cssText = 'display:flex;gap:12px;';
 
         const discordIconBtn = document.createElement('a');
         discordIconBtn.href = '#';
-        discordIconBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:rgba(102,192,244,0.12);border:2px solid rgba(102,192,244,0.35);border-radius:12px;color:#66c0f4;font-size:19px;text-decoration:none;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);cursor:pointer;position:relative;overflow:hidden;';
-        discordIconBtn.innerHTML = '<i class="fa-brands fa-discord" style="position:relative;z-index:1;"></i>';
+        discordIconBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:rgba(102,192,244,0.1);border:1px solid rgba(102,192,244,0.3);border-radius:10px;color:#66c0f4;font-size:18px;text-decoration:none;transition:all 0.3s ease;cursor:pointer;';
+        discordIconBtn.innerHTML = '<i class="fa-brands fa-discord"></i>';
         discordIconBtn.title = t('menu.discord', 'Discord');
-        discordIconBtn.onmouseover = function() { this.style.background = 'rgba(102,192,244,0.3)'; this.style.transform = 'translateY(-3px) scale(1.08) rotate(5deg)'; this.style.boxShadow = '0 10px 25px rgba(102,192,244,0.4), 0 0 20px rgba(102,192,244,0.3)'; this.style.borderColor = '#66c0f4'; };
-        discordIconBtn.onmouseout = function() { this.style.background = 'rgba(102,192,244,0.12)'; this.style.transform = 'translateY(0) scale(1) rotate(0)'; this.style.boxShadow = 'none'; this.style.borderColor = 'rgba(102,192,244,0.35)'; };
+        discordIconBtn.onmouseover = function() { this.style.background = 'rgba(102,192,244,0.25)'; this.style.transform = 'translateY(-2px) scale(1.05)'; this.style.boxShadow = '0 8px 16px rgba(102,192,244,0.3)'; this.style.borderColor = '#66c0f4'; };
+        discordIconBtn.onmouseout = function() { this.style.background = 'rgba(102,192,244,0.1)'; this.style.transform = 'translateY(0) scale(1)'; this.style.boxShadow = 'none'; this.style.borderColor = 'rgba(102,192,244,0.3)'; };
         iconButtons.appendChild(discordIconBtn);
-
-        const settingsIcon = document.createElement('span');
-        settingsIcon.style.cssText = 'display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:linear-gradient(135deg, rgba(102,192,244,0.25) 0%, rgba(74,158,206,0.2) 100%);border:2px solid rgba(102,192,244,0.5);border-radius:12px;color:#66c0f4;font-size:19px;cursor:default;box-shadow:0 0 15px rgba(102,192,244,0.3), inset 0 1px 0 rgba(255,255,255,0.2);';
-        settingsIcon.innerHTML = '<i class="fa-solid fa-gear"></i>';
-        settingsIcon.title = t('menu.settings', 'Settings');
-        iconButtons.appendChild(settingsIcon);
 
         const closeIconBtn = document.createElement('a');
         closeIconBtn.href = '#';
-        closeIconBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:rgba(102,192,244,0.12);border:2px solid rgba(102,192,244,0.35);border-radius:12px;color:#66c0f4;font-size:19px;text-decoration:none;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);cursor:pointer;position:relative;overflow:hidden;';
-        closeIconBtn.innerHTML = '<i class="fa-solid fa-xmark" style="position:relative;z-index:1;"></i>';
+        closeIconBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:rgba(102,192,244,0.1);border:1px solid rgba(102,192,244,0.3);border-radius:10px;color:#66c0f4;font-size:18px;text-decoration:none;transition:all 0.3s ease;cursor:pointer;';
+        closeIconBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
         closeIconBtn.title = t('settings.close', 'Close');
-        closeIconBtn.onmouseover = function() { this.style.background = 'rgba(255,80,80,0.2)'; this.style.transform = 'translateY(-3px) scale(1.08) rotate(90deg)'; this.style.boxShadow = '0 10px 25px rgba(255,80,80,0.4), 0 0 20px rgba(255,80,80,0.3)'; this.style.borderColor = '#ff5050'; this.style.color = '#ff5050'; };
-        closeIconBtn.onmouseout = function() { this.style.background = 'rgba(102,192,244,0.12)'; this.style.transform = 'translateY(0) scale(1) rotate(0)'; this.style.boxShadow = 'none'; this.style.borderColor = 'rgba(102,192,244,0.35)'; this.style.color = '#66c0f4'; };
+        closeIconBtn.onmouseover = function() { this.style.background = 'rgba(102,192,244,0.25)'; this.style.transform = 'translateY(-2px) scale(1.05)'; this.style.boxShadow = '0 8px 16px rgba(102,192,244,0.3)'; this.style.borderColor = '#66c0f4'; };
+        closeIconBtn.onmouseout = function() { this.style.background = 'rgba(102,192,244,0.1)'; this.style.transform = 'translateY(0) scale(1)'; this.style.boxShadow = 'none'; this.style.borderColor = 'rgba(102,192,244,0.3)'; };
         iconButtons.appendChild(closeIconBtn);
 
         const contentWrap = document.createElement('div');
-        contentWrap.style.cssText = 'flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:28px;margin:20px 24px;border:2px solid rgba(74,158,206,0.25);border-radius:14px;background:linear-gradient(145deg, rgba(11,20,30,0.8) 0%, rgba(15,25,35,0.7) 100%);box-shadow:inset 0 2px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);';
+        contentWrap.style.cssText = 'flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:20px;margin:0 24px;border:1px solid rgba(102,192,244,0.3);border-radius:12px;background:rgba(11,20,30,0.6);';
 
         const btnRow = document.createElement('div');
-        btnRow.style.cssText = 'padding:20px 24px 24px;display:flex;gap:12px;justify-content:space-between;align-items:center;background:linear-gradient(180deg, rgba(15,25,35,0.3) 0%, rgba(11,20,30,0.5) 100%);border-top:2px solid rgba(74,158,206,0.25);';
+        btnRow.style.cssText = 'padding:20px 24px 24px;display:flex;gap:12px;justify-content:space-between;align-items:center;';
 
         const backBtn = createSettingsButton('back', '<i class="fa-solid fa-arrow-left"></i>');
         const rightButtons = document.createElement('div');
@@ -1299,8 +1345,6 @@
         const refreshBtn = createSettingsButton('refresh', '<i class="fa-solid fa-arrow-rotate-right"></i>');
         const saveBtn = createSettingsButton('save', '<i class="fa-solid fa-floppy-disk"></i>', true);
 
-        header.appendChild(title);
-        header.appendChild(iconButtons);
         modal.appendChild(header);
         modal.appendChild(contentWrap);
         modal.appendChild(btnRow);
@@ -1323,11 +1367,9 @@
             btn.href = '#';
             btn.innerHTML = '<span>' + text + '</span>';
 
+            btn.className = 'luatools-btn';
             if (isPrimary) {
-                btn.dataset.disabled = '1';
-                btn.style.cssText = 'padding:12px 28px;background:linear-gradient(135deg, #66c0f4 0%, #4a9ece 100%);border:2px solid #66c0f4;border-radius:12px;color:#0f1923;font-size:15px;font-weight:700;text-decoration:none;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);cursor:pointer;box-shadow:0 4px 15px rgba(102,192,244,0.4), inset 0 1px 0 rgba(255,255,255,0.3);text-shadow:0 1px 2px rgba(0,0,0,0.2);letter-spacing:0.3px;';
-            } else {
-                btn.style.cssText = 'padding:12px 24px;background:rgba(102,192,244,0.15);border:2px solid rgba(102,192,244,0.4);border-radius:12px;color:#66c0f4;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);letter-spacing:0.3px;';
+                btn.classList.add('primary');
             }
 
             btn.onmouseover = function() {
@@ -1336,32 +1378,12 @@
                     this.style.cursor = 'not-allowed';
                     return;
                 }
-                if (isPrimary) {
-                    this.style.background = 'linear-gradient(135deg, #7dd4ff 0%, #5ab3e8 100%)';
-                    this.style.transform = 'translateY(-3px) scale(1.03)';
-                    this.style.boxShadow = '0 8px 25px rgba(102,192,244,0.6), inset 0 1px 0 rgba(255,255,255,0.4)';
-                } else {
-                    this.style.background = 'rgba(102,192,244,0.25)';
-                    this.style.transform = 'translateY(-2px)';
-                    this.style.boxShadow = '0 6px 20px rgba(102,192,244,0.3)';
-                    this.style.borderColor = '#66c0f4';
-                }
             };
 
             btn.onmouseout = function() {
                 if (this.dataset.disabled === '1') {
                     this.style.opacity = '0.5';
                     return;
-                }
-                if (isPrimary) {
-                    this.style.background = 'linear-gradient(135deg, #66c0f4 0%, #4a9ece 100%)';
-                    this.style.transform = 'translateY(0) scale(1)';
-                    this.style.boxShadow = '0 4px 15px rgba(102,192,244,0.4), inset 0 1px 0 rgba(255,255,255,0.3)';
-                } else {
-                    this.style.background = 'rgba(102,192,244,0.15)';
-                    this.style.transform = 'translateY(0)';
-                    this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-                    this.style.borderColor = 'rgba(102,192,244,0.4)';
                 }
             };
 
@@ -1374,6 +1396,8 @@
             return btn;
         }
 
+        header.appendChild(title);
+        header.appendChild(iconButtons);
         function applyStaticTranslations() {
             title.textContent = t('settings.title', 'LuaTools · Settings');
             refreshBtn.title = t('settings.refresh', 'Refresh');
@@ -1437,9 +1461,11 @@
             if (hasChanges && !isBusy) {
                 saveBtn.dataset.disabled = '0';
                 saveBtn.style.opacity = '';
+                saveBtn.style.cursor = 'pointer';
             } else {
                 saveBtn.dataset.disabled = '1';
                 saveBtn.style.opacity = '0.6';
+                saveBtn.style.cursor = 'not-allowed';
             }
         }
 
@@ -2079,9 +2105,9 @@
             e.preventDefault();
             if (refreshBtn.dataset.busy === '1') return;
             refreshBtn.dataset.busy = '1';
-            refreshBtn.style.opacity = '0.6';
             handleLoad(true).finally(function(){
                 refreshBtn.dataset.busy = '0';
+                refreshBtn.style.opacity = '1';
                 applyStaticTranslations();
             });
         });
@@ -2214,7 +2240,7 @@
     function showLuaToolsAlert(title, message, onClose) {
         if (document.querySelector('.luatools-alert-overlay')) return;
 
-        ensureLuaToolsAnimations();
+        ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-alert-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);z-index:100001;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -2224,22 +2250,21 @@
         modal.style.cssText = 'background:linear-gradient(135deg, #1b2838 0%, #2a475e 100%);color:#fff;border:2px solid #66c0f4;border-radius:8px;min-width:400px;max-width:520px;padding:32px 36px;box-shadow:0 20px 60px rgba(0,0,0,.9), 0 0 0 1px rgba(102,192,244,0.4);animation:slideUp 0.1s ease-out;';
 
         const titleEl = document.createElement('div');
-        titleEl.style.cssText = 'font-size:22px;color:#fff;margin-bottom:20px;font-weight:700;text-align:center;text-shadow:0 2px 8px rgba(102,192,244,0.4);background:linear-gradient(135deg, #66c0f4 0%, #a4d7f5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;';
+        titleEl.style.cssText = 'font-size:22px;color:#fff;margin-bottom:20px;font-weight:700;text-align:left;text-shadow:0 2px 8px rgba(102,192,244,0.4);background:linear-gradient(135deg, #66c0f4 0%, #a4d7f5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;';
         titleEl.textContent = String(title || 'LuaTools');
 
         const messageEl = document.createElement('div');
-        messageEl.style.cssText = 'font-size:15px;line-height:1.6;margin-bottom:28px;color:#c7d5e0;text-align:center;padding:0 8px;';
+        messageEl.style.cssText = 'font-size:15px;line-height:1.6;margin-bottom:28px;color:#c7d5e0;text-align:left;padding:0 8px;';
         messageEl.textContent = String(message || '');
 
         const btnRow = document.createElement('div');
-        btnRow.style.cssText = 'display:flex;justify-content:center;';
+        btnRow.style.cssText = 'display:flex;justify-content:flex-end;';
 
         const okBtn = document.createElement('a');
         okBtn.href = '#';
-        okBtn.style.cssText = 'min-width:140px;display:flex;align-items:center;justify-content:center;padding:14px 32px;background:linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%);border:1px solid #66c0f4;border-radius:12px;color:#fff;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.3s ease;cursor:pointer;box-shadow:0 0 20px rgba(102,192,244,0.3);';
-        okBtn.innerHTML = '<span>' + lt('Close') + '</span>';
-        okBtn.onmouseover = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.5) 0%, rgba(102,192,244,0.3) 100%)'; this.style.transform = 'translateY(-2px) scale(1.02)'; this.style.boxShadow = '0 12px 30px rgba(102,192,244,0.5)'; };
-        okBtn.onmouseout = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%)'; this.style.transform = 'translateY(0) scale(1)'; this.style.boxShadow = '0 0 20px rgba(102,192,244,0.3)'; };
+        okBtn.className = 'luatools-btn primary';
+        okBtn.style.minWidth = '140px';
+        okBtn.innerHTML = `<span>${lt('Close')}</span>`;
         okBtn.onclick = function(e) {
             e.preventDefault();
             overlay.remove();
@@ -2281,7 +2306,7 @@
         // Create custom modern confirmation dialog
         if (document.querySelector('.luatools-confirm-overlay')) return;
 
-        ensureLuaToolsAnimations();
+        ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-confirm-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);z-index:100001;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -2303,22 +2328,19 @@
 
         const cancelBtn = document.createElement('a');
         cancelBtn.href = '#';
-        cancelBtn.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;padding:14px 28px;background:rgba(139,139,139,0.15);border:1px solid rgba(139,139,139,0.3);border-radius:12px;color:#c7d5e0;font-size:15px;font-weight:500;text-decoration:none;transition:all 0.3s ease;cursor:pointer;';
-        cancelBtn.innerHTML = '<span>' + lt('Cancel') + '</span>';
-        cancelBtn.onmouseover = function() { this.style.background = 'rgba(139,139,139,0.25)'; this.style.transform = 'translateY(-2px)'; this.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)'; };
-        cancelBtn.onmouseout = function() { this.style.background = 'rgba(139,139,139,0.15)'; this.style.transform = 'translateY(0)'; this.style.boxShadow = 'none'; };
+        cancelBtn.className = 'luatools-btn';
+        cancelBtn.style.flex = '1';
+        cancelBtn.innerHTML = `<span>${lt('Cancel')}</span>`;
         cancelBtn.onclick = function(e) {
             e.preventDefault();
             overlay.remove();
             try { onCancel && onCancel(); } catch(_) {}
         };
-
         const confirmBtn = document.createElement('a');
         confirmBtn.href = '#';
-        confirmBtn.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;padding:14px 28px;background:linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%);border:1px solid #66c0f4;border-radius:12px;color:#fff;font-size:15px;font-weight:600;text-decoration:none;transition:all 0.3s ease;cursor:pointer;box-shadow:0 0 20px rgba(102,192,244,0.3);';
-        confirmBtn.innerHTML = '<span>' + lt('Confirm') + '</span>';
-        confirmBtn.onmouseover = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.5) 0%, rgba(102,192,244,0.3) 100%)'; this.style.transform = 'translateY(-2px) scale(1.02)'; this.style.boxShadow = '0 12px 30px rgba(102,192,244,0.5)'; };
-        confirmBtn.onmouseout = function() { this.style.background = 'linear-gradient(135deg, rgba(102,192,244,0.3) 0%, rgba(102,192,244,0.15) 100%)'; this.style.transform = 'translateY(0) scale(1)'; this.style.boxShadow = '0 0 20px rgba(102,192,244,0.3)'; };
+        confirmBtn.className = 'luatools-btn primary';
+        confirmBtn.style.flex = '1';
+        confirmBtn.innerHTML = `<span>${lt('Confirm')}</span>`;
         confirmBtn.onclick = function(e) {
             e.preventDefault();
             overlay.remove();
@@ -2345,11 +2367,11 @@
 
     // Ensure consistent spacing for our buttons
     function ensureStyles() {
-        if (!document.getElementById('luatools-styles')) {
+        if (!document.getElementById('luatools-spacing-styles')) {
             const style = document.createElement('style');
-            style.id = 'luatools-styles';
+            style.id = 'luatools-spacing-styles';
             style.textContent = '.luatools-restart-button, .luatools-button, .luatools-icon-button{ margin-left:6px !important; }';
-            document.head.appendChild(style);
+            document.head.appendChild(style); // This is now separate from the main style block
         }
     }
 
@@ -2865,12 +2887,12 @@
     function showLoadedAppsPopup(apps) {
         // Avoid duplicates
         if (document.querySelector('.luatools-loadedapps-overlay')) return;
-        ensureLuaToolsAnimations();
+        ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
         overlay.className = 'luatools-loadedapps-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
-        overlay.className = 'luatools-loadedapps-overlay'; // I'm not touching this one, it's fine
+        overlay.className = 'luatools-loadedapps-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;';
         const modal = document.createElement('div');
         modal.style.cssText = 'background:linear-gradient(135deg, #1b2838 0%, #2a475e 100%);color:#fff;border:2px solid #66c0f4;border-radius:8px;min-width:420px;max-width:640px;padding:28px 32px;box-shadow:0 20px 60px rgba(0,0,0,.8), 0 0 0 1px rgba(102,192,244,0.3);animation:slideUp 0.1s ease-out;';
