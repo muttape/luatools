@@ -99,6 +99,10 @@
                         transform: scale(1);
                     }
                 }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
                 @keyframes pulse {
                     0%, 100% { opacity: 1; }
                     50% { opacity: 0.7; }
@@ -444,6 +448,7 @@
         try { const s = document.querySelector('.luatools-settings-overlay'); if (s) s.remove(); } catch(_) {}
 
         ensureLuaToolsStyles();
+        ensureFontAwesome();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -492,15 +497,15 @@
                             const apiStatus = document.createElement('div');
                             apiStatus.className = 'luatools-api-status';
                             apiStatus.style.cssText = 'font-size:14px;color:#8f98a0;display:flex;align-items:center;gap:6px;';
-                            apiStatus.innerHTML = '<span style="color:#8f98a0;">⏳</span><span>' + lt('Waiting…') + '</span>';
+                            apiStatus.innerHTML = '<span>' + lt('Waiting…') + '</span><i class="fa-solid fa-spinner" style="animation: spin 1.5s linear infinite;"></i>';
 
                             apiItem.appendChild(apiName);
                             apiItem.appendChild(apiStatus);
                             apiListContainer.appendChild(apiItem);
                         });
                     }
-                } catch(e) {
-                    backendLog('Failed to parse API list: ' + e);
+                } catch(err) {
+                    backendLog('Failed to parse API list: ' + err);
                 }
             }).catch(function(err){
                 backendLog('Failed to load API list: ' + err);
@@ -539,13 +544,13 @@
         const btnRow = document.createElement('div');
         btnRow.style.cssText = 'margin-top:20px;display:flex;gap:8px;justify-content:flex-end;';
         const cancelBtn = document.createElement('a');
-        cancelBtn.className = 'btnv6_blue_hoverfade btn_medium luatools-cancel-btn';
+        cancelBtn.className = 'luatools-btn luatools-cancel-btn';
         cancelBtn.innerHTML = `<span>${lt('Cancel')}</span>`;
         cancelBtn.href = '#';
         cancelBtn.style.display = 'none';
         cancelBtn.onclick = function(e){ e.preventDefault(); cancelOperation(); };
         const hideBtn = document.createElement('a');
-        hideBtn.className = 'btnv6_blue_hoverfade btn_medium luatools-hide-btn';
+        hideBtn.className = 'luatools-btn luatools-hide-btn';
         hideBtn.innerHTML = `<span>${lt('Hide')}</span>`;
         hideBtn.href = '#';
         hideBtn.onclick = function(e){ e.preventDefault(); cleanup(); };
@@ -602,6 +607,7 @@
         try { const l = document.querySelector('.luatools-loading-fixes-overlay'); if (l) l.remove(); } catch(_) {}
 
         ensureLuaToolsStyles();
+        ensureFontAwesome();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-fixes-results-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -843,7 +849,7 @@
         const rightButtons = document.createElement('div');
         rightButtons.style.cssText = 'display:flex;gap:8px;';
         const gameFolderBtn = document.createElement('a');
-        gameFolderBtn.className = 'btnv6_blue_hoverfade btn_medium';
+        gameFolderBtn.className = 'luatools-btn';
         gameFolderBtn.innerHTML = `<span><i class="fa-solid fa-folder" style="margin-right: 8px;"></i>${lt('Game folder')}</span>`;
         gameFolderBtn.href = '#';
         gameFolderBtn.onclick = function(e){ 
@@ -857,7 +863,7 @@
         rightButtons.appendChild(gameFolderBtn);
 
         const backBtn = document.createElement('a');
-        backBtn.className = 'btnv6_blue_hoverfade btn_medium';
+        backBtn.className = 'luatools-btn';
         backBtn.innerHTML = '<span><i class="fa-solid fa-arrow-left"></i></span>';
         backBtn.href = '#';
         backBtn.onclick = function(e){
@@ -914,6 +920,7 @@
         try { const f = document.querySelector('.luatools-fixes-overlay'); if (f) f.remove(); } catch(_) {}
 
         ensureLuaToolsStyles();
+        ensureFontAwesome();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-loading-fixes-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -1031,6 +1038,7 @@
         if (document.querySelector('.luatools-overlay')) return;
 
         ensureLuaToolsStyles();
+        ensureFontAwesome();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;';
@@ -1179,6 +1187,7 @@
         try { const old = document.querySelector('.luatools-unfix-overlay'); if (old) old.remove(); } catch(_) {}
 
         ensureLuaToolsStyles();
+        ensureFontAwesome();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-unfix-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;';
@@ -2313,6 +2322,7 @@
         if (document.querySelector('.luatools-alert-overlay')) return;
 
         ensureLuaToolsStyles();
+        ensureFontAwesome();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-alert-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);z-index:100001;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -2379,6 +2389,7 @@
         if (document.querySelector('.luatools-confirm-overlay')) return;
 
         ensureLuaToolsStyles();
+        ensureFontAwesome();
         const overlay = document.createElement('div');
         overlay.className = 'luatools-confirm-overlay';
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);z-index:100001;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -2858,19 +2869,18 @@
                                     if (apiName === successfulApi) {
                                         foundSuccessful = true;
                                         item.style.background = 'rgba(102,192,244,0.2)';
-                                        item.style.borderColor = 'rgba(102,192,244,0.7)';
-                                        apiStatus.innerHTML = '<span style="color:#66c0f4;font-size:16px;">✓</span><span style="color:#66c0f4;">' + lt('Found') + '</span>';
+                                        item.style.borderColor = '#66c0f4';
+                                        apiStatus.innerHTML = '<span style="color:#66c0f4;">' + lt('Found') + '</span><i class="fa-solid fa-check" style="color:#66c0f4;"></i>';
                                     } else if (!foundSuccessful) {
                                         // This API comes before the successful one, mark as not found
                                         item.style.background = 'rgba(42,71,94,0.2)';
                                         item.style.borderColor = 'rgba(102,192,244,0.1)';
-                                        apiStatus.innerHTML = '<span style="color:#8f98a0;font-size:16px;">✗</span><span style="color:#8f98a0;">' + lt('Not found') + '</span>';
+                                        apiStatus.innerHTML = '<span style="color:#8f98a0;">' + lt('Not found') + '</span><i class="fa-solid fa-xmark" style="color:#8f98a0;"></i>';
                                     } else {
                                         // This API comes after the successful one, mark as skipped
                                         item.style.background = 'rgba(42,71,94,0.15)';
                                         item.style.borderColor = 'rgba(102,192,244,0.1)';
-                                        apiStatus.innerHTML = '<span style="color:#8f98a0;font-size:14px;">—</span><span style="color:#8f98a0;">' + lt('Skipped') + '</span>';
-                                    }
+                                        apiStatus.innerHTML = '<span style="color:#8f98a0;">' + lt('Skipped') + '</span><i class="fa-solid fa-minus" style="color:#8f98a0;"></i>';                                    }
                                 });
                             }
 
@@ -2884,7 +2894,7 @@
                                     if (apiName === lastCheckedApi) {
                                         item.style.background = 'rgba(42,71,94,0.2)';
                                         item.style.borderColor = 'rgba(102,192,244,0.1)';
-                                        apiStatus.innerHTML = '<span style="color:#8f98a0;font-size:16px;">✗</span><span style="color:#8f98a0;">' + lt('Not found') + '</span>';
+                                        apiStatus.innerHTML = '<span style="color:#8f98a0;">' + lt('Not found') + '</span><i class="fa-solid fa-xmark" style="color:#8f98a0;"></i>';
                                     }
                                 });
                             }
@@ -2899,7 +2909,7 @@
                                     if (apiName === st.currentApi) {
                                         item.style.background = 'rgba(102,192,244,0.15)';
                                         item.style.borderColor = 'rgba(102,192,244,0.5)';
-                                        apiStatus.innerHTML = '<span style="color:#66c0f4;animation:pulse 1.5s ease-in-out infinite;">⏳</span><span style="color:#66c0f4;">' + lt('Checking…') + '</span>';
+                                        apiStatus.innerHTML = '<span style="color:#66c0f4;">' + lt('Checking…') + '</span><i class="fa-solid fa-spinner" style="color:#66c0f4;animation: spin 1.5s linear infinite;"></i>';
                                     }
                                 });
 
@@ -2995,7 +3005,7 @@
                                     if (statusText.includes('Waiting') || statusText.includes('Esperando') || statusText.includes('Checking') || statusText.includes('Verificando')) {
                                         item.style.background = 'rgba(42,71,94,0.2)';
                                         item.style.borderColor = 'rgba(102,192,244,0.1)';
-                                        apiStatus.innerHTML = '<span style="color:#8f98a0;font-size:16px;">✗</span><span style="color:#8f98a0;">' + lt('Not found') + '</span>';
+                                        apiStatus.innerHTML = '<span style="color:#8f98a0;">' + lt('Not found') + '</span><i class="fa-solid fa-xmark" style="color:#8f98a0;"></i>';
                                     }
                                 });
                             }
@@ -3077,6 +3087,7 @@
     function showLoadedAppsPopup(apps) {
         // Avoid duplicates
         if (document.querySelector('.luatools-loadedapps-overlay')) return;
+        ensureFontAwesome();
         ensureLuaToolsStyles();
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;';
@@ -3117,7 +3128,7 @@
         instructionText.style.cssText = 'font-size:12px;color:#8f98a0;';
         instructionText.textContent = lt('Left click to install, Right click for SteamDB');
         const dismissBtn = document.createElement('a');
-        dismissBtn.className = 'btnv6_blue_hoverfade btn_medium';
+        dismissBtn.className = 'luatools-btn';
         dismissBtn.innerHTML = '<span>' + lt('Dismiss') + '</span>';
         dismissBtn.href = '#';
         dismissBtn.onclick = function(e){ e.preventDefault(); try { Millennium.callServerMethod('luatools', 'DismissLoadedApps', { contentScriptQuery: '' }); } catch(_) {} try { sessionStorage.setItem('LuaToolsLoadedAppsShown', '1'); } catch(_) {} overlay.remove(); };
