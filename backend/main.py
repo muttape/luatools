@@ -31,6 +31,7 @@ from downloads import (
     get_icon_data_url,
     get_installed_lua_scripts,
     has_luatools_for_app,
+    get_games_database,
     init_applist,
     read_loaded_apps,
     start_add_via_luatools,
@@ -176,6 +177,10 @@ def CancelAddViaLuaTools(appid: int, contentScriptQuery: str = "") -> str:
 
 def GetIconDataUrl(contentScriptQuery: str = "") -> str:
     return get_icon_data_url()
+
+
+def GetGamesDatabase(contentScriptQuery: str = "") -> str:
+    return get_games_database()
 
 
 def ReadLoadedApps(contentScriptQuery: str = "") -> str:
@@ -473,4 +478,3 @@ class Plugin:
 
 
 plugin = Plugin()
-

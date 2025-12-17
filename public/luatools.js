@@ -576,6 +576,40 @@
     // click/run debounce state
     const runState = { inProgress: false, appid: null };
     
+    // Games Database Cache
+    let gamesDatabase = null;
+    let gamesDatabaseFetching = false;
+
+    function fetchGamesDatabase() {
+        if (gamesDatabase) return Promise.resolve(gamesDatabase);
+        if (gamesDatabaseFetching) return new Promise(function(resolve) {
+            const check = setInterval(function() {
+                if (gamesDatabase) { clearInterval(check); resolve(gamesDatabase); }
+            }, 100);
+        });
+
+        gamesDatabaseFetching = true;
+        if (typeof Millennium !== 'undefined' && typeof Millennium.callServerMethod === 'function') {
+            return Millennium.callServerMethod('luatools', 'GetGamesDatabase', { contentScriptQuery: '' })
+                .then(function(res) {
+                    var payload = (res && (res.result || res.value)) || res;
+                    if (typeof payload === 'string') {
+                        try { payload = JSON.parse(payload); } catch(e) {}
+                    }
+                    gamesDatabase = payload || {};
+                    return gamesDatabase;
+                })
+                .catch(function(err) {
+                    console.warn('[LuaTools] Failed to fetch games database', err);
+                    gamesDatabase = {};
+                    return {};
+                });
+        }
+
+        gamesDatabase = {};
+        return Promise.resolve({});
+    }
+
     const TRANSLATION_PLACEHOLDER = 'translation missing';
 
     function applyTranslationBundle(bundle) {
@@ -3603,7 +3637,42 @@
         if (!document.getElementById('luatools-spacing-styles')) {
             const style = document.createElement('style');
             style.id = 'luatools-spacing-styles';
-            style.textContent = '.luatools-restart-button, .luatools-button, .luatools-icon-button{ margin-left:6px !important; }';
+            style.textContent = `
+                .luatools-restart-button, .luatools-button { margin-left: 6px !important; }
+                .luatools-icon-button { margin-left: auto !important; }
+                .luatools-button { position: relative !important; }
+                .luatools-pills-container {
+                    position: absolute !important;
+                    top: -21px !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    display: inline-flex;
+                    gap: 4px;
+                    align-items: center;
+                    pointer-events: none;
+                    z-index: 10;
+                    white-space: nowrap;
+                }
+                .luatools-pill {
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    font-size: 9px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    display: inline-flex;
+                    align-items: center;
+                    height: 16px;
+                    line-height: 1;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    cursor: default;
+                }
+                .luatools-pill.red { background: rgba(255, 80, 80, 0.15); color: #ff5050; border: 1px solid rgba(255, 80, 80, 0.3); }
+                .luatools-pill.green { background: rgba(92, 184, 92, 0.15); color: #5cb85c; border: 1px solid rgba(92, 184, 92, 0.3); }
+                .luatools-pill.yellow { background: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
+                .luatools-pill.orange { background: rgba(255, 136, 0, 0.15); color: #ff8800; border: 1px solid rgba(255, 136, 0, 0.3); }
+                .luatools-pill.gray { background: rgba(150, 150, 150, 0.15); color: #a0a0a0; border: 1px solid rgba(150, 150, 150, 0.3); }
+            `;
             document.head.appendChild(style); // This is now separate from the main style block
         }
     }
@@ -3686,21 +3755,7 @@
 
         if (targetContainer) {
             const steamdbContainer = targetContainer;
-            // Always update translations for existing buttons (even if not a page change)
-            const existingBtn = document.querySelector('.luatools-button');
-            if (existingBtn) {
-                ensureTranslationsLoaded(false).then(function() {
-                    updateButtonTranslations();
-                });
-            }
             
-            // Check if button already exists to avoid duplicates
-            if (existingBtn || window.__LuaToolsButtonInserted) {
-                if (!logState.existsOnce) { backendLog('LuaTools button already exists, skipping'); logState.existsOnce = true; }
-                // Even if LuaTools exists, ensure Restart button is present and translations are updated
-                return;
-            }
-
             // Insert a Restart Steam button between Community Hub and our LuaTools button
             try {
                 if (!document.querySelector('.luatools-restart-button') && !window.__LuaToolsRestartInserted) {
@@ -3808,7 +3863,7 @@
                             iconBtn.appendChild(ispan);
                             iconBtn.addEventListener('click', function(e){ e.preventDefault(); showSettingsPopup(); });
 
-                            restartBtn.after(iconBtn);
+                            steamdbContainer.appendChild(iconBtn);
 
                             window.__LuaToolsIconInserted = true;
                             backendLog('Inserted Icon button');
@@ -3819,10 +3874,17 @@
                 }
             } catch(_) {}
 
-            // If LuaTools button already existed, stop here
-            if (document.querySelector('.luatools-button') || window.__LuaToolsButtonInserted) {
-                return;
+            // Status Pills Logic
+            // Always update translations for existing buttons (even if not a page change)
+            const existingBtn = document.querySelector('.luatools-button');
+            if (existingBtn) {
+                ensureTranslationsLoaded(false).then(function() {
+                    updateButtonTranslations();
+                });
             }
+            
+            // Check if button already exists to avoid duplicates
+            if (!existingBtn && !window.__LuaToolsButtonInserted) {
 
             // Create the LuaTools button modeled after existing SteamDB/PCGW buttons
             // In Big Picture mode, use queue button as reference; otherwise use first link in container
@@ -3914,8 +3976,8 @@
                         // Insert after icon button (order: Restart → Icon → Add)
                         const iconExisting = steamdbContainer.querySelector('.luatools-icon-button');
                         const restartExisting = steamdbContainer.querySelector('.luatools-restart-button');
-                        if (iconExisting && iconExisting.after) {
-                            iconExisting.after(luatoolsButton);
+                        if (iconExisting && iconExisting.before) {
+                            iconExisting.before(luatoolsButton);
                         } else if (restartExisting && restartExisting.after) {
                             restartExisting.after(luatoolsButton);
                         } else if (referenceBtn && referenceBtn.after) {
@@ -3941,6 +4003,99 @@
                     backendLog('LuaTools button inserted');
                 }
             }
+            }
+
+            // status pills!! fire emoji
+            try {
+                const match = window.location.href.match(/https:\/\/store\.steampowered\.com\/app\/(\d+)/) || window.location.href.match(/https:\/\/steamcommunity\.com\/app\/(\d+)/);
+                const appid = match ? parseInt(match[1], 10) : (window.__LuaToolsCurrentAppId || NaN);
+
+                if (!isNaN(appid)) {
+                    fetchGamesDatabase().then(function(db) {
+                        const btn = steamdbContainer.querySelector('.luatools-button');
+                        if (!btn) return;
+
+                        let pillsContainer = btn.querySelector('.luatools-pills-container');
+                        
+                        if (!pillsContainer) {
+                            pillsContainer = document.createElement('div');
+                            pillsContainer.className = 'luatools-pills-container';
+                            btn.appendChild(pillsContainer);
+                        }
+                        
+                        const key = String(appid);
+                        if (!db || !db[key]) {
+                            const newContent = 'untested';
+                            if (pillsContainer.dataset.content === newContent) return;
+                            pillsContainer.dataset.content = newContent;
+                            pillsContainer.innerHTML = '';
+                            
+                            const pill = document.createElement('span');
+                            pill.className = 'luatools-pill gray';
+                            pill.textContent = 'Untested';
+                            pillsContainer.appendChild(pill);
+                            return;
+                        }
+                        
+                        const gameData = db[key];
+                        const newContent = JSON.stringify(gameData);
+                        if (pillsContainer.dataset.content === newContent) return;
+                        pillsContainer.dataset.content = newContent;
+                        
+                        pillsContainer.innerHTML = '';
+
+                        if (typeof gameData.playable !== 'undefined') {
+                            const pill = document.createElement('span');
+                            pill.className = 'luatools-pill';
+                            
+                            // reset button state first
+                            const btn = steamdbContainer.querySelector('.luatools-button');
+                            if (btn) {
+                                btn.style.opacity = '';
+                                btn.style.pointerEvents = '';
+                                btn.style.cursor = '';
+                                const span = btn.querySelector('span');
+                                if (span && span.textContent === 'Unplayable') {
+                                    span.textContent = lt('Add via LuaTools');
+                                }
+                            }
+
+                            if (gameData.playable === 0) {
+                                pill.classList.add('red');
+                                pill.textContent = 'Unplayable';
+                                if (btn) {
+                                    btn.style.opacity = '0.5';
+                                    btn.style.pointerEvents = 'none';
+                                    btn.style.cursor = 'not-allowed';
+                                    const span = btn.querySelector('span');
+                                    if (span) span.textContent = 'Unplayable';
+                                }
+                            } else if (gameData.playable === 1) {
+                                pill.classList.add('green');
+                                pill.textContent = 'Playable';
+                            } else if (gameData.playable === 2) {
+                                pill.classList.add('yellow');
+                                pill.textContent = 'Needs fixes';
+                            }
+                            pillsContainer.appendChild(pill);
+                        }
+
+                        if (gameData.denuvo) {
+                            const pill = document.createElement('span');
+                            pill.className = 'luatools-pill orange';
+                            pill.textContent = 'Denuvo';
+                            pillsContainer.appendChild(pill);
+                        }
+
+                        if (gameData['of-available']) {
+                            const pill = document.createElement('span');
+                            pill.className = 'luatools-pill green';
+                            pill.textContent = 'Online-fix';
+                            pillsContainer.appendChild(pill);
+                        }
+                    });
+                }
+            } catch(e) { /* ignore */ }
         } else {
             if (!logState.missingOnce) { backendLog('LuaTools: steamdbContainer not found on this page'); logState.missingOnce = true; }
         }
