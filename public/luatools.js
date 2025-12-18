@@ -633,6 +633,44 @@
         return Promise.resolve({});
     }
 
+    // fixes cache thing
+    const fixesCache = {};
+    const fixesCacheFetching = {};
+
+    function fetchFixes(appid) {
+        if (fixesCache[appid]) return Promise.resolve(fixesCache[appid]);
+        if (fixesCacheFetching[appid]) {
+            return new Promise(function(resolve) {
+                const check = setInterval(function() {
+                    if (fixesCache[appid]) { clearInterval(check); resolve(fixesCache[appid]); }
+                    else if (fixesCacheFetching[appid] === false) { clearInterval(check); resolve(fixesCache[appid] || null); }
+                }, 100);
+            });
+        }
+
+        fixesCacheFetching[appid] = true;
+        if (typeof Millennium !== 'undefined' && typeof Millennium.callServerMethod === 'function') {
+            return Millennium.callServerMethod('luatools', 'CheckForFixes', { appid, contentScriptQuery: '' })
+                .then(function(res) {
+                    const payload = typeof res === 'string' ? JSON.parse(res) : res;
+                    if (payload && payload.success) {
+                        fixesCache[appid] = payload;
+                        return payload;
+                    }
+                    return null;
+                })
+                .catch(function(err) {
+                    console.warn('[LuaTools] Failed to fetch fixes', err);
+                    return null;
+                })
+                .finally(function() {
+                    fixesCacheFetching[appid] = false;
+                });
+        }
+        fixesCacheFetching[appid] = false;
+        return Promise.resolve(null);
+    }
+
     const TRANSLATION_PLACEHOLDER = 'translation missing';
 
     function applyTranslationBundle(bundle) {
@@ -1887,8 +1925,7 @@
             }
         }, 200);
 
-        Millennium.callServerMethod('luatools', 'CheckForFixes', { appid, contentScriptQuery: '' }).then(function(res){
-            const payload = typeof res === 'string' ? JSON.parse(res) : res;
+        fetchFixes(appid).then(function(payload){
             if (payload && payload.success) {
                 const isGameInstalled = window.__LuaToolsGameIsInstalled === true;
                 showFixesResultsPopup(payload, isGameInstalled);
@@ -4021,58 +4058,74 @@
                         const drmNotice = document.querySelector('.DRM_notice');
                         const hasDenuvo = drmNotice && drmNotice.textContent.includes('Denuvo');
 
-                        const cacheKey = JSON.stringify({
-                            d: gameData || 'untested',
-                            denuvo: hasDenuvo
-                        });
+                        const fixesPromise = fetchFixes(appid);
 
-                        if (pillsContainer.dataset.content === cacheKey) return;
-                        pillsContainer.dataset.content = cacheKey;
-                        
-                        pillsContainer.innerHTML = '';
+                        fixesPromise.then(function(fixesData) {
+                            const hasFixes = fixesData && (
+                                (fixesData.genericFix && fixesData.genericFix.status === 200) || 
+                                (fixesData.onlineFix && fixesData.onlineFix.status === 200)
+                            );
+                            const showDenuvoPill = hasDenuvo && !hasFixes;
 
-                        if (!gameData) {
+                            const cacheKey = JSON.stringify({
+                                d: gameData || 'untested',
+                                showDenuvo: showDenuvoPill,
+                                hasFixes: hasFixes
+                            });
+
+                            if (pillsContainer.dataset.content === cacheKey) return;
+                            pillsContainer.dataset.content = cacheKey;
+                            
+                            pillsContainer.innerHTML = '';
+
+                            let status = 'untested';
+                            if (gameData && typeof gameData.playable !== 'undefined') {
+                                if (gameData.playable === 1) status = 'playable';
+                                else if (gameData.playable === 0) status = 'unplayable';
+                                else if (gameData.playable === 2) status = 'needs_fixes';
+                            }
+
+                            if (status === 'untested' && hasFixes) {
+                                status = 'needs_fixes';
+                            }
+
                             const pill = document.createElement('span');
-                            pill.className = 'luatools-pill gray';
-                            pill.textContent = 'Untested';
-                            pillsContainer.appendChild(pill);
-                        } else {
-                            if (typeof gameData.playable !== 'undefined') {
-                                const pill = document.createElement('span');
-                                pill.className = 'luatools-pill';
-                                
-                                // reset button state first
-                                const btn = steamdbContainer.querySelector('.luatools-button');
-                                if (btn) {
-                                    btn.style.opacity = '';
-                                    btn.style.pointerEvents = '';
-                                    btn.style.cursor = '';
-                                    const span = btn.querySelector('span');
-                                    if (span && span.textContent === 'Unplayable') {
-                                        span.textContent = lt('Add via LuaTools');
-                                    }
-                                }
+                            pill.className = 'luatools-pill';
 
-                                if (gameData.playable === 0) {
-                                    pill.classList.add('red');
-                                    pill.textContent = 'Unplayable';
-                                } else if (gameData.playable === 1) {
-                                    pill.classList.add('green');
-                                    pill.textContent = 'Playable';
-                                } else if (gameData.playable === 2) {
-                                    pill.classList.add('yellow');
-                                    pill.textContent = 'Needs fixes';
+                            if (status === 'untested') {
+                                pill.classList.add('gray');
+                                pill.textContent = 'Untested';
+                            } else if (status === 'playable') {
+                                pill.classList.add('green');
+                                pill.textContent = 'Playable';
+                            } else if (status === 'unplayable') {
+                                pill.classList.add('red');
+                                pill.textContent = 'Unplayable';
+                            } else if (status === 'needs_fixes') {
+                                pill.classList.add('yellow');
+                                pill.textContent = 'Needs fixes';
+                            }
+                            pillsContainer.appendChild(pill);
+
+                            // reset button state
+                            const btn = steamdbContainer.querySelector('.luatools-button');
+                            if (btn) {
+                                btn.style.opacity = '';
+                                btn.style.pointerEvents = '';
+                                btn.style.cursor = '';
+                                const span = btn.querySelector('span');
+                                if (span && span.textContent === 'Unplayable') {
+                                    span.textContent = lt('Add via LuaTools');
                                 }
+                            }
+
+                            if (showDenuvoPill) {
+                                const pill = document.createElement('span');
+                                pill.className = 'luatools-pill orange';
+                                pill.textContent = 'Denuvo';
                                 pillsContainer.appendChild(pill);
                             }
-                        }
-
-                        if (hasDenuvo) {
-                            const pill = document.createElement('span');
-                            pill.className = 'luatools-pill orange';
-                            pill.textContent = 'Denuvo';
-                            pillsContainer.appendChild(pill);
-                        }
+                        });
                     });
                 }
             } catch(e) { /* ignore */ }
