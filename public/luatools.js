@@ -3630,12 +3630,11 @@
             const style = document.createElement('style');
             style.id = 'luatools-spacing-styles';
             style.textContent = `
-                .luatools-restart-button, .luatools-button { margin-left: 6px !important; }
-                .luatools-icon-button { margin-left: auto !important; }
-                .luatools-button { position: relative !important; }
+                .luatools-restart-button, .luatools-icon-button { margin-left: 6px !important; margin-right: 0 !important; }
+                .luatools-button { margin-right: 0 !important; position: relative !important; }
                 .luatools-pills-container {
                     position: absolute !important;
-                    top: -21px !important;
+                    top: -25px !important;
                     left: 50% !important;
                     transform: translateX(-50%) !important;
                     display: inline-flex;
