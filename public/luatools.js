@@ -127,6 +127,22 @@
         animationFrameId: null
     };
 
+    // duplicated from main code thing for reliability
+    function isBigPictureMode() {
+        if (typeof window.__LUATOOLS_IS_BIG_PICTURE__ !== 'undefined') {
+            return window.__LUATOOLS_IS_BIG_PICTURE__;
+        }
+        const htmlClasses = document.documentElement.className;
+        const userAgent = navigator.userAgent;
+        let score = 0;
+        if (htmlClasses.includes('BasicUI')) score += 3;
+        if (htmlClasses.includes('DesktopUI')) score -= 3;
+        if (userAgent.includes('Valve Steam Gamepad')) score += 2;
+        if (userAgent.includes('Valve Steam Client')) score -= 2;
+        if (htmlClasses.includes('touch')) score += 1;
+        return score > 0;
+    }
+
     // B button handler removed - users should use the modal buttons directly
     // This prevents conflicts with Steam's back navigation
     let onBackHandler = function() {
@@ -158,6 +174,8 @@
     }
 
     function scanFocusableElements() {
+        if (!isBigPictureMode()) return;
+
         // Only scan if there's a LuaTools overlay active
         const activeOverlay = document.querySelector(OVERLAY_SELECTOR_STRING);
 
@@ -451,6 +469,11 @@
     }
 
     function init() {
+        if (!isBigPictureMode()) {
+            console.log('[Gamepad] Not in Big Picture Mode, skipping initialization');
+            return;
+        }
+
         console.log('[Gamepad] Initializing Gamepad Navigation System...');
 
         window.addEventListener('gamepadconnected', onGamepadConnected);
@@ -608,6 +631,44 @@
 
         gamesDatabase = {};
         return Promise.resolve({});
+    }
+
+    // fixes cache thing
+    const fixesCache = {};
+    const fixesCacheFetching = {};
+
+    function fetchFixes(appid) {
+        if (fixesCache[appid]) return Promise.resolve(fixesCache[appid]);
+        if (fixesCacheFetching[appid]) {
+            return new Promise(function(resolve) {
+                const check = setInterval(function() {
+                    if (fixesCache[appid]) { clearInterval(check); resolve(fixesCache[appid]); }
+                    else if (fixesCacheFetching[appid] === false) { clearInterval(check); resolve(fixesCache[appid] || null); }
+                }, 100);
+            });
+        }
+
+        fixesCacheFetching[appid] = true;
+        if (typeof Millennium !== 'undefined' && typeof Millennium.callServerMethod === 'function') {
+            return Millennium.callServerMethod('luatools', 'CheckForFixes', { appid, contentScriptQuery: '' })
+                .then(function(res) {
+                    const payload = typeof res === 'string' ? JSON.parse(res) : res;
+                    if (payload && payload.success) {
+                        fixesCache[appid] = payload;
+                        return payload;
+                    }
+                    return null;
+                })
+                .catch(function(err) {
+                    console.warn('[LuaTools] Failed to fetch fixes', err);
+                    return null;
+                })
+                .finally(function() {
+                    fixesCacheFetching[appid] = false;
+                });
+        }
+        fixesCacheFetching[appid] = false;
+        return Promise.resolve(null);
     }
 
     const TRANSLATION_PLACEHOLDER = 'translation missing';
@@ -1864,8 +1925,7 @@
             }
         }, 200);
 
-        Millennium.callServerMethod('luatools', 'CheckForFixes', { appid, contentScriptQuery: '' }).then(function(res){
-            const payload = typeof res === 'string' ? JSON.parse(res) : res;
+        fetchFixes(appid).then(function(payload){
             if (payload && payload.success) {
                 const isGameInstalled = window.__LuaToolsGameIsInstalled === true;
                 showFixesResultsPopup(payload, isGameInstalled);
@@ -3521,18 +3581,97 @@
         }, 150);
     }
 
+    // Special red warning modal for "playable === 2" cases
+    function showLuaToolsPlayableWarning(message, onProceed, onCancel) {
+        // Close settings so modal is visible
+        closeSettingsOverlay();
+        if (document.querySelector('.luatools-playable-warning-overlay')) return;
+
+        ensureLuaToolsStyles();
+        ensureFontAwesome();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'luatools-playable-warning-overlay luatools-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:100001;display:flex;align-items:center;justify-content:center;';
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:linear-gradient(180deg,#3a0f0f,#2a0b0b);color:#fff;border:2px solid rgba(255,80,80,0.9);border-radius:8px;min-width:420px;max-width:640px;padding:24px 28px;box-shadow:0 20px 60px rgba(0,0,0,.9);';
+
+        const header = document.createElement('div');
+        header.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:14px;justify-content:center;';
+        const icon = document.createElement('i');
+        icon.className = 'fa-solid fa-triangle-exclamation';
+        icon.style.cssText = 'color:#ffddda;font-size:28px;';
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'font-size:18px;font-weight:700;text-align:center;';
+        titleEl.textContent = 'Warning';
+        header.appendChild(icon);
+        header.appendChild(titleEl);
+
+        const messageEl = document.createElement('div');
+        messageEl.style.cssText = 'font-size:14px;line-height:1.5;margin-bottom:20px;color:#ffecec;text-align:center;padding:0 6px;';
+        messageEl.textContent = String(message || 'This game may not work, support for it wont be given in our discord');
+
+        const btnRow = document.createElement('div');
+        btnRow.style.cssText = 'display:flex;gap:12px;justify-content:center;';
+
+        const cancelBtn = document.createElement('a');
+        cancelBtn.href = '#';
+        cancelBtn.className = 'luatools-btn';
+        cancelBtn.style.flex = '1';
+        cancelBtn.innerHTML = `<span>${lt('Cancel')}</span>`;
+        cancelBtn.onclick = function(e) {
+            e.preventDefault();
+            overlay.remove();
+            try { onCancel && onCancel(); } catch(_) {}
+        };
+
+        const proceedBtn = document.createElement('a');
+        proceedBtn.href = '#';
+        proceedBtn.className = 'luatools-btn primary';
+        proceedBtn.style.flex = '1';
+        proceedBtn.innerHTML = `<span>${lt('Proceed')}</span>`;
+        proceedBtn.onclick = function(e) {
+            e.preventDefault();
+            overlay.remove();
+            try { onProceed && onProceed(); } catch(_) {}
+        };
+
+        btnRow.appendChild(cancelBtn);
+        btnRow.appendChild(proceedBtn);
+
+        modal.appendChild(header);
+        modal.appendChild(messageEl);
+        modal.appendChild(btnRow);
+        overlay.appendChild(modal);
+
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                overlay.remove();
+                try { onCancel && onCancel(); } catch(_) {}
+            }
+        });
+
+        document.body.appendChild(overlay);
+
+        setTimeout(function() {
+            if (window.GamepadNav) {
+                window.GamepadNav.scanElements();
+            }
+        }, 150);
+    }
+
     // Ensure consistent spacing for our buttons
     function ensureStyles() {
         if (!document.getElementById('luatools-spacing-styles')) {
             const style = document.createElement('style');
             style.id = 'luatools-spacing-styles';
             style.textContent = `
-                .luatools-restart-button, .luatools-button { margin-left: 6px !important; }
-                .luatools-icon-button { margin-left: auto !important; }
-                .luatools-button { position: relative !important; }
+                .luatools-restart-button, .luatools-icon-button { margin-left: 6px !important; margin-right: 0 !important; }
+                .luatools-button { margin-right: 0 !important; position: relative !important; }
                 .luatools-pills-container {
                     position: absolute !important;
-                    top: -21px !important;
+                    top: -25px !important;
                     left: 50% !important;
                     transform: translateX(-50%) !important;
                     display: inline-flex;
@@ -3838,8 +3977,8 @@
                                 // Insert after icon button (order: Restart → Icon → Add)
                                 const iconExisting = steamdbContainer.querySelector('.luatools-icon-button');
                                 const restartExisting = steamdbContainer.querySelector('.luatools-restart-button');
-                                if (iconExisting && iconExisting.after) {
-                                    iconExisting.after(luatoolsButton);
+                                if (iconExisting && iconExisting.before) {
+                                    iconExisting.before(luatoolsButton);
                                 } else if (restartExisting && restartExisting.after) {
                                     restartExisting.after(luatoolsButton);
                                 } else if (referenceBtn && referenceBtn.after) {
@@ -3913,31 +4052,60 @@
                         }
                         
                         const key = String(appid);
-                        if (!db || !db[key]) {
-                            const newContent = 'untested';
-                            if (pillsContainer.dataset.content === newContent) return;
-                            pillsContainer.dataset.content = newContent;
-                            pillsContainer.innerHTML = '';
-                            
-                            const pill = document.createElement('span');
-                            pill.className = 'luatools-pill gray';
-                            pill.textContent = 'Untested';
-                            pillsContainer.appendChild(pill);
-                            return;
-                        }
+                        const gameData = (db && db[key]) ? db[key] : null;
                         
-                        const gameData = db[key];
-                        const newContent = JSON.stringify(gameData);
-                        if (pillsContainer.dataset.content === newContent) return;
-                        pillsContainer.dataset.content = newContent;
-                        
-                        pillsContainer.innerHTML = '';
+                        // check denuvo
+                        const drmNotice = document.querySelector('.DRM_notice');
+                        const hasDenuvo = drmNotice && drmNotice.textContent.includes('Denuvo');
 
-                        if (typeof gameData.playable !== 'undefined') {
-                            const pill = document.createElement('span');
-                            pill.className = 'luatools-pill';
+                        const fixesPromise = fetchFixes(appid);
+
+                        fixesPromise.then(function(fixesData) {
+                            const hasFixes = fixesData && (
+                                (fixesData.genericFix && fixesData.genericFix.status === 200) || 
+                                (fixesData.onlineFix && fixesData.onlineFix.status === 200)
+                            );
+                            const showDenuvoPill = hasDenuvo && !hasFixes;
+
+                            const cacheKey = JSON.stringify({
+                                d: gameData || 'untested',
+                                showDenuvo: showDenuvoPill,
+                                hasFixes: hasFixes
+                            });
+
+                            if (pillsContainer.dataset.content === cacheKey) return;
+                            pillsContainer.dataset.content = cacheKey;
                             
-                            // reset button state first
+                            pillsContainer.innerHTML = '';
+
+                            let status = 'untested';
+                            if (gameData && typeof gameData.playable !== 'undefined') {
+                                if (gameData.playable === 1) status = 'playable';
+                                else if (gameData.playable === 0) status = 'unplayable';
+                                else if (gameData.playable === 2) status = 'needs_fixes';
+                            }
+
+                            if (status === 'untested' && hasFixes) {
+                                status = 'needs_fixes';
+                            }
+
+                            if (status !== 'untested') {
+                                const pill = document.createElement('span');
+                                pill.className = 'luatools-pill';
+                                if (status === 'playable') {
+                                    pill.classList.add('green');
+                                    pill.textContent = 'Playable';
+                                } else if (status === 'unplayable') {
+                                    pill.classList.add('red');
+                                    pill.textContent = 'Unplayable';
+                                } else if (status === 'needs_fixes') {
+                                    pill.classList.add('yellow');
+                                    pill.textContent = 'Needs fixes';
+                                }
+                                pillsContainer.appendChild(pill);
+                            }
+
+                            // reset button state
                             const btn = steamdbContainer.querySelector('.luatools-button');
                             if (btn) {
                                 btn.style.opacity = '';
@@ -3949,39 +4117,13 @@
                                 }
                             }
 
-                            if (gameData.playable === 0) {
-                                pill.classList.add('red');
-                                pill.textContent = 'Unplayable';
-                                if (btn) {
-                                    btn.style.opacity = '0.5';
-                                    btn.style.pointerEvents = 'none';
-                                    btn.style.cursor = 'not-allowed';
-                                    const span = btn.querySelector('span');
-                                    if (span) span.textContent = 'Unplayable';
-                                }
-                            } else if (gameData.playable === 1) {
-                                pill.classList.add('green');
-                                pill.textContent = 'Playable';
-                            } else if (gameData.playable === 2) {
-                                pill.classList.add('yellow');
-                                pill.textContent = 'Needs fixes';
+                            if (showDenuvoPill) {
+                                const pill = document.createElement('span');
+                                pill.className = 'luatools-pill orange';
+                                pill.textContent = 'Denuvo';
+                                pillsContainer.appendChild(pill);
                             }
-                            pillsContainer.appendChild(pill);
-                        }
-
-                        if (gameData.denuvo) {
-                            const pill = document.createElement('span');
-                            pill.className = 'luatools-pill orange';
-                            pill.textContent = 'Denuvo';
-                            pillsContainer.appendChild(pill);
-                        }
-
-                        if (gameData['of-available']) {
-                            const pill = document.createElement('span');
-                            pill.className = 'luatools-pill green';
-                            pill.textContent = 'Online-fix';
-                            pillsContainer.appendChild(pill);
-                        }
+                        });
                     });
                 }
             } catch(e) { /* ignore */ }
@@ -4114,10 +4256,6 @@
             evt.preventDefault();
             evt.stopPropagation(); // Stop propagation to avoid conflicts
             backendLog('LuaTools delegated click');
-            // Use the same loading modal on delegated clicks
-            if (!document.querySelector('.luatools-overlay')) {
-                showTestPopup();
-            }
             try {
                 const match = window.location.href.match(/https:\/\/store\.steampowered\.com\/app\/(\d+)/) || window.location.href.match(/https:\/\/steamcommunity\.com\/app\/(\d+)/);
                 const appid = match ? parseInt(match[1], 10) : NaN;
@@ -4126,10 +4264,38 @@
                         backendLog('LuaTools: operation already in progress for this appid');
                         return;
                     }
-                    runState.inProgress = true;
-                    runState.appid = appid;
-                    Millennium.callServerMethod('luatools', 'StartAddViaLuaTools', { appid, contentScriptQuery: '' });
-                    startPolling(appid);
+
+                    // Helper that continues with the normal add flow
+                    const continueWithAdd = function() {
+                        if (!document.querySelector('.luatools-overlay')) {
+                            showTestPopup();
+                        }
+                        runState.inProgress = true;
+                        runState.appid = appid;
+                        Millennium.callServerMethod('luatools', 'StartAddViaLuaTools', { appid, contentScriptQuery: '' });
+                        startPolling(appid);
+                    };
+
+                    // Check games database to decide whether to show warning modal
+                    fetchGamesDatabase().then(function(db) {
+                        try {
+                            const key = String(appid);
+                            const gameData = db && db[key] ? db[key] : null;
+                            if (gameData && gameData.playable === 0) {
+                                // warning modal
+                                showLuaToolsPlayableWarning('This game may not work, support for it wont be given in our discord', function() {
+                                    continueWithAdd();
+                                }, function() {
+                                });
+                            } else {
+                                continueWithAdd();
+                            }
+                        } catch(_) {
+                            continueWithAdd();
+                        }
+                    }).catch(function() {
+                        continueWithAdd();
+                    });
                 }
             } catch(_) {}
         }
