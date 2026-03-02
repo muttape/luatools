@@ -1197,7 +1197,6 @@
                 return btn;
             }
 
-            const discordBtn = createIconButton('lt-settings-discord', 'fa-brands fa-discord', 'menu.discord', 'Discord');
             const settingsManagerBtn = createIconButton('lt-settings-open-manager', 'fa-gear', 'menu.settings', 'Settings');
             const closeBtn = createIconButton('lt-settings-close', 'fa-xmark', 'settings.close', 'Close');
 
@@ -1243,22 +1242,6 @@
                                 const msg = (payload && payload.message) ? String(payload.message) : lt('No updates available.');
                                 ShowLuaToolsAlert('LuaTools', msg);
                             } catch (_) { }
-                        });
-                    } catch (_) { }
-                });
-            }
-
-            if (discordBtn) {
-                discordBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    try {
-                        overlay.remove();
-                    } catch (_) { }
-                    const url = 'https://discord.gg/luatools';
-                    try {
-                        Millennium.callServerMethod('luatools', 'OpenExternalUrl', {
-                            url,
-                            contentScriptQuery: ''
                         });
                     } catch (_) { }
                 });
@@ -1753,7 +1736,6 @@
             return btn;
         }
 
-        const discordBtn = createIconButton('lt-fixes-discord', 'fa-brands fa-discord', 'menu.discord', 'Discord');
         const settingsBtn = createIconButton('lt-fixes-settings', 'fa-gear', 'menu.settings', 'Settings');
         const closeIconBtn = createIconButton('lt-fixes-close', 'fa-xmark', 'settings.close', 'Close');
 
@@ -2084,19 +2066,6 @@
         closeIconBtn.onclick = function (e) {
             e.preventDefault();
             overlay.remove();
-        };
-        discordBtn.onclick = function (e) {
-            e.preventDefault();
-            try {
-                overlay.remove();
-            } catch (_) { }
-            const url = 'https://discord.gg/luatools';
-            try {
-                Millennium.callServerMethod('luatools', 'OpenExternalUrl', {
-                    url,
-                    contentScriptQuery: ''
-                });
-            } catch (_) { }
         };
         settingsBtn.onclick = function (e) {
             e.preventDefault();
@@ -2684,28 +2653,6 @@
         const iconButtons = document.createElement('div');
         iconButtons.style.cssText = 'display:flex;gap:12px;';
 
-        const discordIconBtn = document.createElement('a');
-        discordIconBtn.href = '#';
-        const discordBtnColors = getThemeColors();
-        discordIconBtn.style.cssText = `display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:rgba(${discordBtnColors.rgbString},0.1);border:1px solid ${discordBtnColors.border};border-radius:10px;color:${discordBtnColors.accent};font-size:18px;text-decoration:none;transition:all 0.3s ease;cursor:pointer;`;
-        discordIconBtn.innerHTML = '<i class="fa-brands fa-discord"></i>';
-        discordIconBtn.title = t('menu.discord', 'Discord');
-        discordIconBtn.onmouseover = function () {
-            const c = getThemeColors();
-            this.style.background = `rgba(${c.rgbString},0.25)`;
-            this.style.transform = 'translateY(-2px) scale(1.05)';
-            this.style.boxShadow = `0 8px 16px ${c.shadow}`;
-            this.style.borderColor = c.accent;
-        };
-        discordIconBtn.onmouseout = function () {
-            const c = getThemeColors();
-            this.style.background = `rgba(${c.rgbString},0.1)`;
-            this.style.transform = 'translateY(0) scale(1)';
-            this.style.boxShadow = 'none';
-            this.style.borderColor = c.border;
-        };
-        iconButtons.appendChild(discordIconBtn);
-
         const closeIconBtn = document.createElement('a');
         closeIconBtn.href = '#';
         const closeBtnColors = getThemeColors();
@@ -2971,7 +2918,6 @@
             refreshBtn.title = t('settings.refresh', 'Refresh');
             saveBtn.title = t('settings.save', 'Save Settings');
             backBtn.title = t('Back', 'Back');
-            discordIconBtn.title = t('menu.discord', 'Discord');
             closeIconBtn.title = t('settings.close', 'Close');
         }
         applyStaticTranslations();
@@ -4021,17 +3967,6 @@
         closeIconBtn.addEventListener('click', function (e) {
             e.preventDefault();
             overlay.remove();
-        });
-
-        discordIconBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            const url = 'https://discord.gg/luatools';
-            try {
-                Millennium.callServerMethod('luatools', 'OpenExternalUrl', {
-                    url,
-                    contentScriptQuery: ''
-                });
-            } catch (_) { }
         });
 
         overlay.addEventListener('click', function (e) {
