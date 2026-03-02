@@ -15,36 +15,8 @@ from locales import DEFAULT_LOCALE, PLACEHOLDER_VALUE, get_locale_manager
 # Includes all Steam-supported languages. Languages without a matching
 # locale file will fall back to 'en' at runtime (checked against available locales).
 _STEAM_LANG_TO_LOCALE = {
-    "arabic": "ar",
-    "bulgarian": "bg",
-    "brazilian": "pt-BR",
-    "czech": "cs",
-    "danish": "da",
-    "dutch": "nl",
     "english": "en",
-    "finnish": "fi",
-    "french": "fr",
-    "german": "de",
-    "greek": "el",
-    "hungarian": "hu",
-    "indonesian": "id",
     "italian": "it",
-    "japanese": "ja",
-    "koreana": "ko",
-    "latam": "es",
-    "norwegian": "no",
-    "polish": "pl",
-    "portuguese": "pt",
-    "romanian": "ro",
-    "russian": "ru",
-    "schinese": "zh-CN",
-    "spanish": "es",
-    "swedish": "sv",
-    "tchinese": "zh-TW",
-    "thai": "th",
-    "turkish": "tr",
-    "ukrainian": "uk",
-    "vietnamese": "vi",
 }
 
 
