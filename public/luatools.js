@@ -4628,9 +4628,7 @@
                 // Use luatools-btn primary class for that premium modal look
                 headerBtn.className = 'luatools-btn primary luatools-header-button Focusable';
                 headerBtn.style.cssText = 'margin-left:12px; display:inline-flex; align-items:center; justify-content:center; align-self:center; cursor:pointer; flex-shrink:0; width:36px; height:36px; padding:0; border-radius:8px; border-width:1px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);';
-                headerBtn.title = 'LuaTools Settings';
-
-                headerBtn.setAttribute('data-tooltip-text', 'LuaTools Settings');
+                headerBtn.title = lt('LuaTools Settings');
 
                 const img = document.createElement('img');
                 img.style.height = '18px';
