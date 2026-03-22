@@ -1506,6 +1506,20 @@
 
     // Translations are loaded by fetchSettingsConfig() in onFrontendReady — no separate preload needed.
 
+    function askRestartConfirmation() {
+        showLuaToolsConfirm('LuaTools', lt('Restart Steam now?'),
+            function () {
+                try {
+                    Millennium.callServerMethod('luatools', 'RestartSteam', {
+                        contentScriptQuery: ''
+                    });
+                    // SteamClient.User.StartRestart(true) Unreliable, closes but doesn't restart (on my pc)
+                } catch (_) { }
+            },
+            function () { /* Cancel - do nothing */ }
+        );
+    }
+
     let settingsMenuPending = false;
 
     // Helper: show a Steam-style popup with a 10s loading bar (custom UI)
@@ -4731,31 +4745,9 @@
                         try {
                             // Ensure any settings overlays are closed before confirm
                             closeSettingsOverlay();
-                            showLuaToolsConfirm('LuaTools', lt('Restart Steam now?'),
-                                function () {
-                                    try {
-                                        Millennium.callServerMethod('luatools', 'RestartSteam', {
-                                            contentScriptQuery: ''
-                                        });
-                                    } catch (_) { }
-                                },
-                                function () {
-                                    /* Cancel - do nothing */
-                                }
-                            );
+                            askRestartConfirmation()
                         } catch (_) {
-                            showLuaToolsConfirm('LuaTools', lt('Restart Steam now?'),
-                                function () {
-                                    try {
-                                        Millennium.callServerMethod('luatools', 'RestartSteam', {
-                                            contentScriptQuery: ''
-                                        });
-                                    } catch (_) { }
-                                },
-                                function () {
-                                    /* Cancel - do nothing */
-                                }
-                            );
+                            askRestartConfirmation()
                         }
                     });
 
@@ -5173,16 +5165,7 @@
 
                             if (isUpdateMsg) {
                                 // For update messages, use confirm dialog with OK (restart) and Cancel options
-                                showLuaToolsConfirm('LuaTools', msg, function () {
-                                    // User clicked Confirm - restart Steam
-                                    try {
-                                        Millennium.callServerMethod('luatools', 'RestartSteam', {
-                                            contentScriptQuery: ''
-                                        });
-                                    } catch (_) { }
-                                }, function () {
-                                    // User clicked Cancel - do nothing (just closes dialog)
-                                });
+                                askRestartConfirmation()
                             } else {
                                 // For non-update messages, use regular alert
                                 ShowLuaToolsAlert('LuaTools', msg);
@@ -5252,42 +5235,33 @@
                         startPolling(appid);
                     };
 
-                    // First check if it's a DLC
-                    fetch('https://store.steampowered.com/api/appdetails?appids=' + appid + '&filters=basic')
-                        .then(function (res) {
-                            return res.json();
-                        })
-                        .then(function (data) {
-                            if (data && data[appid] && data[appid].success && data[appid].data) {
-                                const info = data[appid].data;
-                                if (info.type === 'dlc' && info.fullgame && info.fullgame.appid) {
-                                    showDlcWarning(appid, info.fullgame.appid, info.fullgame.name);
-                                    return;
-                                }
-                            }
+                    // Check if this is a dlc
+                    const isdlc = !!document.querySelector(".game_area_dlc_bubble");
+                    const parentdiv = document.querySelector('.glance_details a[href*="/app/"]')
 
-                            // Not a DLC (or failed to check), proceed with database check
-                            return fetchGamesDatabase().then(function (db) {
-                                try {
-                                    const key = String(appid);
-                                    const gameData = db && db[key] ? db[key] : null;
-                                    if (gameData && gameData.playable === 0) {
-                                        // warning modal
-                                        showLuaToolsPlayableWarning('This game may not work, support for it wont be given in our discord', function () {
-                                            continueWithAdd();
-                                        }, function () { });
-                                    } else {
+                    if (isdlc && parentdiv) {
+                        const id = parseInt(parentdiv.href.match(/app\/(\d+)\//)?.[1] ?? "")
+                        const name = parentdiv.innerText ?? "name not found";
+
+                        showDlcWarning(appid, id, name);
+                    } else {
+                        // Not a dlc (or failed) ? Then continue normally
+                        return fetchGamesDatabase().then(function (db) {
+                            try {
+                                const gameData = db?.[String(appid)] ?? null;
+                                if (gameData?.playable === 0) {
+                                    // warning modal
+                                    showLuaToolsPlayableWarning('This game may not work, support for it wont be given in our discord', function () {
                                         continueWithAdd();
-                                    }
-                                } catch (_) {
+                                    }, function () { });
+                                } else {
                                     continueWithAdd();
                                 }
-                            });
-                        })
-                        .catch(function (err) {
-                            backendLog('LuaTools: DLC check failed: ' + err);
-                            continueWithAdd();
+                            } catch (_) {
+                                continueWithAdd();
+                            }
                         });
+                    }
                 }
             } catch (_) { }
         }
@@ -5444,10 +5418,11 @@
                             if (st.status === 'downloading') status.textContent = lt('Downloading…');
                             if (st.status === 'processing') status.textContent = lt('Processing package…');
                             if (st.status === 'installing') status.textContent = lt('Installing…');
-                            if (st.status === 'done') status.textContent = lt('Finishing…');
+                            if (st.status === 'checking content') status.textContent = lt('Checking content…');
+                            // if (st.status === 'done') status.textContent = lt('Finishing…');
                             if (st.status === 'failed') status.textContent = lt('Failed');
                         }
-                        if (st.status === 'downloading' || st.status === 'processing' || st.status === 'installing') {
+                        if (["downloading", "processing", "installing"].includes(st.status)) {
                             // reveal progress UI (if overlay visible)
                             if (wrap && wrap.style.display === 'none') wrap.style.display = 'block';
                             if (progressInfo && progressInfo.style.display === 'none') {
@@ -5484,17 +5459,13 @@
                             const cancelBtn = overlay ? overlay.querySelector('.luatools-cancel-btn') : null;
                             if (cancelBtn && st.status === 'downloading') cancelBtn.style.display = '';
                         }
-                        if (st.status === 'done') {
+                        
+                        if (["checking content", "done"].includes(st.status)) {
                             // Update popup if visible
                             if (title) title.textContent = t('common.appName', 'LuaTools');
                             if (bar) bar.style.width = '100%';
                             if (percent) percent.textContent = '100%';
-                            if (status) status.textContent = lt('Game added!');
-                            // Hide Cancel button and update Hide to Close
-                            const cancelBtn = overlay ? overlay.querySelector('.luatools-cancel-btn') : null;
-                            if (cancelBtn) cancelBtn.style.display = 'none';
-                            const hideBtn = overlay ? overlay.querySelector('.luatools-hide-btn') : null;
-                            if (hideBtn) hideBtn.innerHTML = '<span>' + lt('Close') + '</span>';
+
                             // hide progress visuals after a short beat
                             if (wrap || progressInfo) {
                                 setTimeout(function () {
@@ -5502,6 +5473,44 @@
                                     if (progressInfo) progressInfo.style.display = 'none';
                                 }, 300);
                             }
+
+                            // Hide Cancel button
+                            const cancelBtn = overlay ? overlay.querySelector('.luatools-cancel-btn') : null;
+                            if (cancelBtn) cancelBtn.style.display = 'none';
+                        }
+
+                        if (st.status === 'done') {
+                            // Update popup if visible
+                            if (status) {
+                                const result = st.contentCheckResult;
+                                
+                                if (!result) return status.innerText = lt('Game added!');
+
+                                // \u00A0 is a white space (unless it's automatically trimmed)
+                                const status_content = [
+                                    lt("Game added!"),
+                                    lt("Content details =>"),
+                                    `\u00A0\u00A0• ${lt("Workshop: ")}${lt(result.workshop)}`,
+                                ]
+    
+                                if (result.dlc.missing.length || result.dlc.included.length) {
+                                    status_content.push(`\u00A0\u00A0• ${lt("Dlc: ")}`)
+                                    
+                                    if (result.dlc.included.length > 0) {
+                                        status_content.push(`\u00A0\u00A0\u00A0\u00A0◦ ${lt("Included")}: ${result.dlc.included.length}`)
+                                    }
+                                    if (result.dlc.missing.length > 0) {
+                                        status_content.push(`\u00A0\u00A0\u00A0\u00A0◦ ${lt("Missing")}: ${result.dlc.missing.length} (${result.dlc.missing.join(', ')})`)
+                                    }
+                                }
+                                
+                                status.style.whiteSpace = "pre-line";
+                                status.innerText = status_content.join('\n');
+                            }
+
+                            // Update Hide button to Close
+                            const hideBtn = overlay ? overlay.querySelector('.luatools-hide-btn') : null;
+                            if (hideBtn) hideBtn.innerHTML = '<span>' + lt('Close') + '</span>';
                             done = true;
                             clearInterval(timer);
                             runState.inProgress = false;
