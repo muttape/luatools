@@ -5483,29 +5483,55 @@
                             // Update popup if visible
                             if (status) {
                                 const result = st.contentCheckResult;
-                                
+
                                 if (!result) return status.innerText = lt('Game added!');
 
-                                // \u00A0 is a white space (unless it's automatically trimmed)
-                                const status_content = [
-                                    lt("Game added!"),
-                                    lt("Content details =>"),
-                                    `\u00A0\u00A0• ${lt("Workshop: ")}${lt(result.workshop)}`,
-                                ]
-    
+                                const colors = getThemeColors();
+                                status.innerText = '';
+                                status.style.whiteSpace = '';
+
+                                // "Game added!" header
+                                const heading = document.createElement('div');
+                                heading.style.cssText = `font-size:14px;color:${colors.accent};font-weight:600;margin-bottom:12px;`;
+                                heading.textContent = lt('Game added!');
+                                status.appendChild(heading);
+
+                                // Content details label
+                                const detailsLabel = document.createElement('div');
+                                detailsLabel.style.cssText = `font-size:12px;color:${colors.textSecondary};margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;`;
+                                detailsLabel.textContent = lt('Content details =>');
+                                status.appendChild(detailsLabel);
+
+                                // Workshop pill
+                                const workshopItem = document.createElement('div');
+                                const workshopRaw = lt(result.workshop);
+                                const workshopText = workshopRaw.replace(/[\u2705\u274C\uD83C\uDF89]/g, '').trim();
+                                const workshopIncluded = workshopRaw.includes('🎉') || workshopRaw.includes('✅');
+                                const workshopBg = workshopIncluded ? `rgba(${colors.rgbString},0.2)` : 'rgba(255,0,0,0.15)';
+                                const workshopBorder = workshopIncluded ? colors.accent : '#ff5c5c';
+                                const workshopColor = workshopIncluded ? colors.accent : '#ff5c5c';
+                                const workshopIcon = workshopIncluded ? 'fa-check' : 'fa-xmark';
+                                workshopItem.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:8px;background:${workshopBg};border:1px solid ${workshopBorder};border-radius:6px;`;
+                                workshopItem.innerHTML = `<div style="font-size:14px;color:${colors.textSecondary};font-weight:500;">${lt('Workshop: ')}</div><div style="font-size:14px;color:${workshopColor};display:flex;align-items:center;gap:6px;"><span>${workshopText}</span><i class="fa-solid ${workshopIcon}" style="color:${workshopColor};"></i></div>`;
+                                status.appendChild(workshopItem);
+
+                                // DLC pills
                                 if (result.dlc.missing.length || result.dlc.included.length) {
-                                    status_content.push(`\u00A0\u00A0• ${lt("Dlc: ")}`)
-                                    
+                                    const stripEmoji = function(s) { return s.replace(/[\u2705\u274C\uD83C\uDF89]/g, '').trim(); };
                                     if (result.dlc.included.length > 0) {
-                                        status_content.push(`\u00A0\u00A0\u00A0\u00A0◦ ${lt("Included")}: ${result.dlc.included.length}`)
+                                        const dlcIncItem = document.createElement('div');
+                                        dlcIncItem.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:8px;background:rgba(${colors.rgbString},0.2);border:1px solid ${colors.accent};border-radius:6px;`;
+                                        dlcIncItem.innerHTML = `<div style="font-size:14px;color:${colors.textSecondary};font-weight:500;">${lt('Dlc: ')}${result.dlc.included.length} ${stripEmoji(lt('Included'))}</div><div style="font-size:14px;color:${colors.accent};display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-check" style="color:${colors.accent};"></i></div>`;
+                                        status.appendChild(dlcIncItem);
                                     }
                                     if (result.dlc.missing.length > 0) {
-                                        status_content.push(`\u00A0\u00A0\u00A0\u00A0◦ ${lt("Missing")}: ${result.dlc.missing.length} (${result.dlc.missing.join(', ')})`)
+                                        const dlcMissItem = document.createElement('div');
+                                        const dlcIds = result.dlc.missing.join(', ');
+                                        dlcMissItem.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:8px;background:rgba(255,0,0,0.15);border:1px solid #ff5c5c;border-radius:6px;gap:12px;`;
+                                        dlcMissItem.innerHTML = `<div style="font-size:14px;color:${colors.textSecondary};font-weight:500;white-space:nowrap;">${lt('Dlc: ')}${result.dlc.missing.length} ${stripEmoji(lt('Missing'))}</div><div style="font-size:14px;color:#ff5c5c;display:flex;align-items:center;gap:6px;text-align:right;word-break:break-word;"><span>(${dlcIds})</span><i class="fa-solid fa-xmark" style="color:#ff5c5c;flex-shrink:0;"></i></div>`;
+                                        status.appendChild(dlcMissItem);
                                     }
                                 }
-                                
-                                status.style.whiteSpace = "pre-line";
-                                status.innerText = status_content.join('\n');
                             }
 
                             // Update Hide button to Close

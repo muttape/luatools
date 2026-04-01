@@ -43,6 +43,7 @@ from fixes import (
     get_apply_fix_status,
     get_installed_fixes,
     get_unfix_status,
+    init_fixes_index,
     unfix_game,
 )
 from utils import ensure_temp_download_dir
@@ -456,6 +457,11 @@ class Plugin:
             init_applist()
         except Exception as exc:
             logger.warn(f"LuaTools: Applist initialization failed: {exc}")
+
+        try:
+            init_fixes_index()
+        except Exception as exc:
+            logger.warn(f"LuaTools: Fixes index initialization failed: {exc}")
 
         _copy_webkit_files()
         _inject_webkit_files()
