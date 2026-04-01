@@ -614,7 +614,7 @@ def _process_and_install_lua(appid: int, zip_path: str) -> None:
             
             # Workshop presence
             work_depot = str(info.get("workshop_depot", 0))
-            if work_depot == 0:
+            if work_depot == "0":
                 workshop_result = "No workshop for the game ✅"
             else:
                 # Checking if mentionned in addappid lines + if it includes a decryption key
