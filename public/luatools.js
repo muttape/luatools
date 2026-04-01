@@ -5504,9 +5504,8 @@
 
                                 // Workshop pill
                                 const workshopItem = document.createElement('div');
-                                const workshopRaw = lt(result.workshop);
-                                const workshopText = workshopRaw.replace(/[\u2705\u274C\uD83C\uDF89]/g, '').trim();
-                                const workshopIncluded = workshopRaw.includes('🎉') || workshopRaw.includes('✅');
+                                const workshopText = lt(result.workshop);
+                                const workshopIncluded = result.workshop.includes('Included') || result.workshop.includes('No workshop');
                                 const workshopBg = workshopIncluded ? `rgba(${colors.rgbString},0.2)` : 'rgba(255,0,0,0.15)';
                                 const workshopBorder = workshopIncluded ? colors.accent : '#ff5c5c';
                                 const workshopColor = workshopIncluded ? colors.accent : '#ff5c5c';
@@ -5517,18 +5516,17 @@
 
                                 // DLC pills
                                 if (result.dlc.missing.length || result.dlc.included.length) {
-                                    const stripEmoji = function(s) { return s.replace(/[\u2705\u274C\uD83C\uDF89]/g, '').trim(); };
                                     if (result.dlc.included.length > 0) {
                                         const dlcIncItem = document.createElement('div');
                                         dlcIncItem.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:8px;background:rgba(${colors.rgbString},0.2);border:1px solid ${colors.accent};border-radius:6px;`;
-                                        dlcIncItem.innerHTML = `<div style="font-size:14px;color:${colors.textSecondary};font-weight:500;">${lt('Dlc: ')}${result.dlc.included.length} ${stripEmoji(lt('Included'))}</div><div style="font-size:14px;color:${colors.accent};display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-check" style="color:${colors.accent};"></i></div>`;
+                                        dlcIncItem.innerHTML = `<div style="font-size:14px;color:${colors.textSecondary};font-weight:500;">${lt('Dlc: ')}${result.dlc.included.length} ${lt('Included')}</div><div style="font-size:14px;color:${colors.accent};display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-check" style="color:${colors.accent};"></i></div>`;
                                         status.appendChild(dlcIncItem);
                                     }
                                     if (result.dlc.missing.length > 0) {
                                         const dlcMissItem = document.createElement('div');
                                         const dlcIds = result.dlc.missing.join(', ');
                                         dlcMissItem.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:8px;background:rgba(255,0,0,0.15);border:1px solid #ff5c5c;border-radius:6px;gap:12px;`;
-                                        dlcMissItem.innerHTML = `<div style="font-size:14px;color:${colors.textSecondary};font-weight:500;white-space:nowrap;">${lt('Dlc: ')}${result.dlc.missing.length} ${stripEmoji(lt('Missing'))}</div><div style="font-size:14px;color:#ff5c5c;display:flex;align-items:center;gap:6px;text-align:right;word-break:break-word;"><span>(${dlcIds})</span><i class="fa-solid fa-xmark" style="color:#ff5c5c;flex-shrink:0;"></i></div>`;
+                                        dlcMissItem.innerHTML = `<div style="font-size:14px;color:${colors.textSecondary};font-weight:500;white-space:nowrap;">${lt('Dlc: ')}${result.dlc.missing.length} ${lt('Missing')}</div><div style="font-size:14px;color:#ff5c5c;display:flex;align-items:center;gap:6px;text-align:right;word-break:break-word;"><span>(${dlcIds})</span><i class="fa-solid fa-xmark" style="color:#ff5c5c;flex-shrink:0;"></i></div>`;
                                         status.appendChild(dlcMissItem);
                                     }
                                 }
