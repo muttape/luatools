@@ -203,6 +203,8 @@
     "Initializing download...": "Iniciando download...",
     "Loading APIs...": "Carregando APIs...",
     "This game may not work, support for it wont be given in our discord": "Este jogo pode não funcionar, suporte não será dado em nosso discord",
-    "{fix} applied successfully!": "{fix} aplicado com sucesso!"
+    "{fix} applied successfully!": "{fix} aplicado com sucesso!",
+    "settings.fastDownload.label": "Download Rápido",
+    "settings.fastDownload.description": "Escolher automaticamente a primeira fonte disponível ao adicionar um jogo."
   }
 }

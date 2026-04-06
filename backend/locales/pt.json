@@ -203,6 +203,8 @@
     "Select Download Source": "translation missing",
     "Initializing download...": "translation missing",
     "Loading APIs...": "translation missing",
-    "This game may not work, support for it wont be given in our discord": "translation missing"
+    "This game may not work, support for it wont be given in our discord": "translation missing",
+    "settings.fastDownload.label": "Download Rápido",
+    "settings.fastDownload.description": "Escolher automaticamente a primeira fonte disponível ao adicionar um jogo."
   }
 }

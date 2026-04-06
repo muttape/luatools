@@ -203,6 +203,8 @@
     "settings.useSteamLanguage.label": "Puxar Idioma da Steam",
     "settings.useSteamLanguage.no": "Deixa quieto",
     "settings.useSteamLanguage.yes": "Pode pá",
-    "{fix} applied successfully!": "{fix} no esquema meu bom"
+    "{fix} applied successfully!": "{fix} no esquema meu bom",
+    "settings.fastDownload.label": "Download Rápido",
+    "settings.fastDownload.description": "Escolher automaticamente a primeira fonte disponível ao adicionar um jogo."
   }
 }
