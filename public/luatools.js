@@ -6309,11 +6309,20 @@
                       return;
                     }
 
-                    if (available.length === 1) {
-                      // Only one source, proceed automatically
+                    let isFastDownload = true; // default
+                    try {
+                      if (window.__LuaToolsSettings && window.__LuaToolsSettings.values && window.__LuaToolsSettings.values.general) {
+                        if (typeof window.__LuaToolsSettings.values.general.fastDownload !== 'undefined') {
+                           isFastDownload = window.__LuaToolsSettings.values.general.fastDownload;
+                        }
+                      }
+                    } catch(e) {}
+
+                    if (available.length === 1 || isFastDownload) {
+                      // Only one source or fast download enabled, proceed automatically with the first available
                       const source = available[0];
                       backendLog(
-                        "LuaTools: Auto-selecting only source: " + source.name,
+                        "LuaTools: Auto-selecting " + (available.length === 1 ? "only source" : "source via fast download") + ": " + source.name,
                       );
                       startDirectDownload(appid, source.url, source.name);
                     } else {

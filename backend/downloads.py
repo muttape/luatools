@@ -874,14 +874,20 @@ def check_apis_for_app(appid: int) -> str:
         available = False
         
         try:
-            # We use HEAD for fast checking if possible, fallback to small GET
-            resp = client.head(url, headers=headers, follow_redirects=True, timeout=5)
-            if resp.status_code == success_code:
-                available = True
-            elif resp.status_code == 405: # Method Not Allowed - some APIs don't like HEAD
-                resp = client.get(url, headers=headers, follow_redirects=True, timeout=5)
+            if name.lower() == "morrenus":
+                status_url = f"https://manifest.morrenus.xyz/api/v1/status/{appid}?api_key={morrenus_api_key}"
+                resp = client.get(status_url, headers=headers, follow_redirects=True, timeout=5)
                 if resp.status_code == success_code:
                     available = True
+            else:
+                # We use HEAD for fast checking if possible, fallback to small GET
+                resp = client.head(url, headers=headers, follow_redirects=True, timeout=5)
+                if resp.status_code == success_code:
+                    available = True
+                elif resp.status_code == 405: # Method Not Allowed - some APIs don't like HEAD
+                    resp = client.get(url, headers=headers, follow_redirects=True, timeout=5)
+                    if resp.status_code == success_code:
+                        available = True
         except Exception:
             pass
 
