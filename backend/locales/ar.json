@@ -203,6 +203,8 @@
     "Select Download Source": "اختر مصدر التحميل",
     "Initializing download...": "جاري بدء التحميل...",
     "Loading APIs...": "جاري تحميل الواجهات...",
-    "This game may not work, support for it wont be given in our discord": "قد لا تعمل هذه اللعبة، ولن يتم تقديم الدعم لها في الديسكورد الخاص بنا"
+    "This game may not work, support for it wont be given in our discord": "قد لا تعمل هذه اللعبة، ولن يتم تقديم الدعم لها في الديسكورد الخاص بنا",
+    "settings.fastDownload.label": "تنزيل سريع",
+    "settings.fastDownload.description": "اختر أول مصدر متاح تلقائيًا عند إضافة لعبة."
   }
 }
