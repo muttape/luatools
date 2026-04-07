@@ -203,6 +203,8 @@
     "Select Download Source": "Επιλογή πηγής λήψης",
     "Initializing download...": "Αρχικοποίηση λήψης...",
     "Loading APIs...": "Φόρτωση API...",
-    "This game may not work, support for it wont be given in our discord": "Αυτό το παιχνίδι ενδέχεται να μην λειτουργεί, η υποστήριξη γι' αυτό δεν θα παρέχεται στο discord μας"
+    "This game may not work, support for it wont be given in our discord": "Αυτό το παιχνίδι ενδέχεται να μην λειτουργεί, η υποστήριξη γι' αυτό δεν θα παρέχεται στο discord μας",
+    "settings.fastDownload.label": "Γρήγορη λήψη",
+    "settings.fastDownload.description": "Αυτόματη επιλογή της πρώτης διαθέσιμης πηγής κατά την προσθήκη παιχνιδιού."
   }
 }

@@ -203,6 +203,8 @@
     "Select Download Source": "Select Download Source",
     "Initializing download...": "Initializing download...",
     "Loading APIs...": "Loading APIs...",
-    "This game may not work, support for it wont be given in our discord": "This game may not work, support for it wont be given in our discord"
+    "This game may not work, support for it wont be given in our discord": "This game may not work, support for it wont be given in our discord",
+    "settings.fastDownload.label": "Fast Download",
+    "settings.fastDownload.description": "Automatically choose the first available source when adding a game."
   }
 }

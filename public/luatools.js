@@ -1859,10 +1859,10 @@
     dlTitleText.textContent = lt("Select Download Source");
     title.appendChild(dlTitleText);
 
-    // API list container — card grid layout
+    // API list container
     const apiListContainer = document.createElement("div");
     apiListContainer.className = "luatools-api-list";
-    apiListContainer.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;";
+    apiListContainer.style.cssText = "margin-bottom:16px;";
 
     // Placeholder while loading APIs
     const loadingItem = document.createElement("div");
@@ -1895,25 +1895,20 @@
                 const apiItem = document.createElement("div");
                 apiItem.className = `luatools-api-item luatools-api-${index}`;
                 apiItem.setAttribute("data-api-name", api.name);
-                apiItem.style.cssText = `display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:1;min-width:80px;padding:12px 8px;background:rgba(${colors.rgbString},0.06);border:1px solid ${colors.borderRgba};border-radius:12px;transition:all 0.2s;text-align:center;`;
-
-                const apiIcon = document.createElement("i");
-                apiIcon.className = "fa-solid fa-server";
-                apiIcon.style.cssText = `font-size:18px;color:${colors.accent};`;
+                apiItem.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:8px;background:rgba(${colors.rgbString},0.1);border:1px solid ${colors.borderRgba};border-radius:6px;transition:all 0.2s;`;
 
                 const apiName = document.createElement("div");
                 apiName.className = "luatools-api-name";
-                apiName.style.cssText = `font-size:11px;color:${colors.text};font-weight:500;line-height:1.2;`;
+                apiName.style.cssText = `font-size:14px;color:${colors.textSecondary};font-weight:500;`;
                 apiName.textContent = api.name;
 
                 const apiStatus = document.createElement("div");
                 apiStatus.className = "luatools-api-status";
-                apiStatus.style.cssText = `font-size:10px;color:${colors.textSecondary};display:flex;align-items:center;justify-content:center;gap:4px;`;
+                apiStatus.style.cssText = `font-size:14px;color:${colors.textSecondary};display:flex;align-items:center;gap:6px;`;
                 apiStatus.innerHTML =
-                  '<i class="fa-solid fa-spinner" style="font-size:10px;animation: spin 1.5s linear infinite;"></i>' +
-                  "<span>" + lt("Waiting…") + "</span>";
+                  "<span>" + lt("Waiting…") + "</span>" +
+                  '<i class="fa-solid fa-spinner" style="animation: spin 1.5s linear infinite;"></i>';
 
-                apiItem.appendChild(apiIcon);
                 apiItem.appendChild(apiName);
                 apiItem.appendChild(apiStatus);
                 apiListContainer.appendChild(apiItem);
@@ -3631,7 +3626,23 @@
     function updateSaveState() {
       const hasChanges = Object.keys(collectChanges()).length > 0;
       const isBusy = saveBtn.dataset.busy === "1";
-      if (hasChanges && !isBusy) {
+      
+      let morrenusKey = "";
+      let foundMorrenusKey = false;
+      for (const group in state.draft) {
+        if (state.draft[group] && state.draft[group].hasOwnProperty("morrenusApiKey")) {
+          morrenusKey = state.draft[group].morrenusApiKey;
+          foundMorrenusKey = true;
+          break;
+        }
+      }
+      
+      let isValid = true;
+      if (foundMorrenusKey && morrenusKey) {
+          isValid = /^smm_[0-9a-f]{96}$/.test(morrenusKey);
+      }
+      
+      if (hasChanges && !isBusy && isValid) {
         saveBtn.dataset.disabled = "0";
         saveBtn.style.opacity = "";
         saveBtn.style.cursor = "pointer";
@@ -3639,6 +3650,10 @@
         saveBtn.dataset.disabled = "1";
         saveBtn.style.opacity = "0.6";
         saveBtn.style.cursor = "not-allowed";
+      }
+      
+      if (foundMorrenusKey && morrenusKey && !isValid) {
+        setStatus(lt("Invalid Morrenus API Key format"), "#ff5c5c");
       }
     }
 
@@ -4029,6 +4044,69 @@
               });
 
               controlWrap.appendChild(textInput);
+
+              if (option.key === "morrenusApiKey") {
+                const statsDiv = document.createElement("div");
+                statsDiv.style.cssText = "margin-top:8px;font-size:12px;color:" + textColors.textSecondary + ";width:180px;word-break:break-word;";
+                controlWrap.appendChild(statsDiv);
+                 
+                const updateStats = function(key) {
+                  if (!key || key.trim() === "") {
+                    statsDiv.innerHTML = "";
+                    return;
+                  }
+                  if (!/^smm_[0-9a-f]{96}$/.test(key)) {
+                    statsDiv.innerHTML = "<span style='color:#ff5c5c;'>" + lt("Invalid key format") + "</span>";
+                    return;
+                  }
+                  statsDiv.innerHTML = "<i class='fa-solid fa-spinner' style='animation:spin 1s linear infinite;margin-right:6px;'></i>" + lt("Checking key...");
+                  Millennium.callServerMethod("luatools", "GetMorrenusStats", { api_key: key, contentScriptQuery: "" })
+                    .then(r => typeof r === "string" ? JSON.parse(r) : r)
+                    .then(res => {
+                      if (res && res.username) {
+                        let expiryText = "";
+                        if (res.api_key_expires_at) {
+                          const expiry = new Date(res.api_key_expires_at);
+                          const now = new Date();
+                          const days = Math.max(0, Math.ceil((expiry - now) / (1000 * 60 * 60 * 24)));
+                          expiryText = days + " " + lt("days left");
+                        }
+                        const usage = typeof res.daily_usage !== 'undefined' ? res.daily_usage : "?";
+                        const limit = typeof res.daily_limit !== 'undefined' ? res.daily_limit : "?";
+                        
+                        const usageColor = typeof res.daily_usage !== 'undefined' && typeof res.daily_limit !== 'undefined' && res.daily_usage >= res.daily_limit ? "#ff5c5c" : textColors.accent;
+
+                        statsDiv.innerHTML = `
+                          <div style="padding:10px;background:rgba(255,255,255,0.04);border:1px solid ${textColors.borderRgba || 'rgba(255,255,255,0.1)'};border-radius:8px;">
+                            <div style="font-weight:600;margin-bottom:6px;color:${textColors.text};"><i class="fa-solid fa-user" style="margin-right:6px;opacity:0.8;"></i>${res.username}</div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:${usageColor};font-weight:500;">
+                                <span><i class="fa-solid fa-chart-pie" style="margin-right:6px;"></i>${lt("Usage")}</span>
+                                <span>${usage} / ${limit}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;color:${textColors.textSecondary};">
+                                <span><i class="fa-solid fa-clock" style="margin-right:6px;"></i>${lt("Expires")}</span>
+                                <span>${expiryText}</span>
+                            </div>
+                          </div>
+                        `;
+                      } else {
+                        statsDiv.innerHTML = "<span style='color:#ff5c5c;'>" + lt("Invalid or rejected key") + "</span>";
+                      }
+                    })
+                    .catch(e => {
+                      statsDiv.innerHTML = "<span style='color:#ff5c5c;'>" + lt("Failed to verify key") + "</span>";
+                    });
+                };
+                
+                updateStats(textInput.value);
+                
+                textInput.addEventListener("input", function() {
+                  if (textInput.apiDebounce) clearTimeout(textInput.apiDebounce);
+                  textInput.apiDebounce = setTimeout(() => {
+                    updateStats(this.value);
+                  }, 800);
+                });
+              }
             } else {
               const unsupported = document.createElement("div");
               unsupported.style.cssText = "font-size:12px;color:#ffb347;";
@@ -6309,11 +6387,20 @@
                       return;
                     }
 
-                    if (available.length === 1) {
-                      // Only one source, proceed automatically
+                    let isFastDownload = true; // default
+                    try {
+                      if (window.__LuaToolsSettings && window.__LuaToolsSettings.values && window.__LuaToolsSettings.values.general) {
+                        if (typeof window.__LuaToolsSettings.values.general.fastDownload !== 'undefined') {
+                           isFastDownload = window.__LuaToolsSettings.values.general.fastDownload;
+                        }
+                      }
+                    } catch(e) {}
+
+                    if (available.length === 1 || isFastDownload) {
+                      // Only one source or fast download enabled, proceed automatically with the first available
                       const source = available[0];
                       backendLog(
-                        "LuaTools: Auto-selecting only source: " + source.name,
+                        "LuaTools: Auto-selecting " + (available.length === 1 ? "only source" : "source via fast download") + ": " + source.name,
                       );
                       startDirectDownload(appid, source.url, source.name);
                     } else {
@@ -6335,40 +6422,96 @@
             };
 
             const startDirectDownload = function (appid, url, apiName) {
-              runState.inProgress = true;
-              runState.appid = appid;
+              const performDownload = function () {
+                runState.inProgress = true;
+                runState.appid = appid;
 
-              // If the selection modal was open, it should be replaced by showTestPopup or updated
-              const overlay = document.querySelector(".luatools-overlay");
-              if (overlay) {
-                // Reset for progress
-                const status = overlay.querySelector(".luatools-status");
-                if (status) status.textContent = lt("Initializing download...");
-                const progressWrap = overlay.querySelector(
-                  ".luatools-progress-wrap",
+                // If the selection modal was open, it should be replaced by showTestPopup or updated
+                const overlay = document.querySelector(".luatools-overlay");
+                if (overlay) {
+                  // Reset for progress
+                  const status = overlay.querySelector(".luatools-status");
+                  if (status) status.textContent = lt("Initializing download...");
+                  const progressWrap = overlay.querySelector(
+                    ".luatools-progress-wrap",
+                  );
+                  if (progressWrap) progressWrap.style.display = "block";
+                  const progressInfo = overlay.querySelector(
+                    ".luatools-progress-info",
+                  );
+                  if (progressInfo) progressInfo.style.display = "block";
+                  const cancelBtn = overlay.querySelector(".luatools-cancel-btn");
+                  if (cancelBtn) cancelBtn.style.display = "flex";
+                } else {
+                  showTestPopup();
+                }
+
+                Millennium.callServerMethod(
+                  "luatools",
+                  "StartAddViaLuaToolsFromUrl",
+                  {
+                    appid,
+                    url,
+                    apiName,
+                    contentScriptQuery: "",
+                  },
                 );
-                if (progressWrap) progressWrap.style.display = "block";
-                const progressInfo = overlay.querySelector(
-                  ".luatools-progress-info",
-                );
-                if (progressInfo) progressInfo.style.display = "block";
-                const cancelBtn = overlay.querySelector(".luatools-cancel-btn");
-                if (cancelBtn) cancelBtn.style.display = "flex";
-              } else {
-                showTestPopup();
+                startPolling(appid);
+              };
+
+              if (apiName && apiName.toLowerCase().includes("morrenus")) {
+                let morrenusKey = "";
+                try {
+                  if (window.__LuaToolsSettings && window.__LuaToolsSettings.values && window.__LuaToolsSettings.values.advanced) {
+                    morrenusKey = window.__LuaToolsSettings.values.advanced.morrenusApiKey || "";
+                  }
+                  if (!morrenusKey) {
+                    for (const group in window.__LuaToolsSettings.values) {
+                      if (window.__LuaToolsSettings.values[group] && window.__LuaToolsSettings.values[group].morrenusApiKey) {
+                        morrenusKey = window.__LuaToolsSettings.values[group].morrenusApiKey;
+                        break;
+                      }
+                    }
+                  }
+                } catch(e) {}
+                
+                if (morrenusKey && /^smm_[0-9a-f]{96}$/.test(morrenusKey)) {
+                  // Wait, check the limits
+                  showTestPopup(); // Ensures basic loading modal is up
+                  const overlay = document.querySelector(".luatools-overlay");
+                  if (overlay) {
+                    const status = overlay.querySelector(".luatools-status");
+                    if (status) status.textContent = lt("Verifying API limits...");
+                    const cancelBtn = overlay.querySelector(".luatools-cancel-btn");
+                    if (cancelBtn) cancelBtn.style.display = "none";
+                  }
+                  
+                  Millennium.callServerMethod("luatools", "GetMorrenusStats", { api_key: morrenusKey, force_refresh: true, contentScriptQuery: "" })
+                    .then(r => typeof r === "string" ? JSON.parse(r) : r)
+                    .then(res => {
+                        if (res && res.can_make_requests === false) {
+                            // exhausted usages or expired API key
+                            showLuaToolsPlayableWarning(
+                                lt("You have exceeded your daily download limit or your Morrenus API key is expired. Please wait until tomorrow for more uses, or regenerate your key on the Morrenus website."),
+                                null, 
+                                null
+                            );
+                            runState.inProgress = false;
+                        } else {
+                            performDownload();
+                        }
+                    })
+                    .catch(e => {
+                        backendLog("LuaTools: Error checking Morrenus API limit: " + e);
+                        // Network error or other, try to proceed and let the backend error it if needed
+                        performDownload();
+                    });
+                  return; // yield execution to async fetch
+                }
               }
 
-              Millennium.callServerMethod(
-                "luatools",
-                "StartAddViaLuaToolsFromUrl",
-                {
-                  appid,
-                  url,
-                  apiName,
-                  contentScriptQuery: "",
-                },
-              );
-              startPolling(appid);
+              // Normal flow if not Morrenus or no key present
+              performDownload();
             };
 
             function showSourceSelectionModal(appid, available) {
