@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "使用 Steam 語言",
     "settings.useSteamLanguage.no": "否",
     "settings.useSteamLanguage.yes": "是",
-    "{fix} applied successfully!": "{fix} 已成功套用！"
+    "{fix} applied successfully!": "{fix} 已成功套用！",
+    "settings.morrenusApiKey.label": "Morrenus API Key",
+    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
+    "settings.morrenusApiKey.placeholder": "Enter your API Key"
   }
 }

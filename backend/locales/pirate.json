@@ -217,6 +217,9 @@
     "settings.useSteamLanguage.label": "Use Steam's Tongue",
     "settings.useSteamLanguage.no": "Nay",
     "settings.useSteamLanguage.yes": "Aye",
-    "{fix} applied successfully!": "{fix} nailed to the hull! Yarr!"
+    "{fix} applied successfully!": "{fix} nailed to the hull! Yarr!",
+    "settings.morrenusApiKey.label": "Morrenus API Key",
+    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
+    "settings.morrenusApiKey.placeholder": "Enter your API Key"
   }
 }

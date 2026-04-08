@@ -169,7 +169,7 @@
     "settings.donateKeys.yes": "Sim",
     "settings.empty": "Nenhuma configuração disponível.",
     "settings.error": "Falha ao carregar as configurações.",
-    "settings.fastDownload.description": "Escolher automaticamente a primeira fonte disponível ao adicionar um jogo.",
+    "settings.fastDownload.description": "Escolhe automaticamente a primeira fonte disponível ao adicionar um jogo.",
     "settings.fastDownload.label": "Download Rápido",
     "settings.general": "Geral",
     "settings.generalDescription": "Preferências globais do LuaTools.",
@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Usar Idioma do Steam",
     "settings.useSteamLanguage.no": "Não",
     "settings.useSteamLanguage.yes": "Sim",
-    "{fix} applied successfully!": "{fix} aplicado com sucesso!"
+    "{fix} applied successfully!": "{fix} aplicado com sucesso!",
+    "settings.morrenusApiKey.label": "Morrenus API Key",
+    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
+    "settings.morrenusApiKey.placeholder": "Enter your API Key"
   }
 }

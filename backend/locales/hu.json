@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Steam nyelv használata",
     "settings.useSteamLanguage.no": "Nem",
     "settings.useSteamLanguage.yes": "Igen",
-    "{fix} applied successfully!": "{fix} sikeresen alkalmazva!"
+    "{fix} applied successfully!": "{fix} sikeresen alkalmazva!",
+    "settings.morrenusApiKey.label": "Morrenus API Key",
+    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
+    "settings.morrenusApiKey.placeholder": "Enter your API Key"
   }
 }

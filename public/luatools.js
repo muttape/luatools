@@ -782,10 +782,10 @@
       name: "Original",
       bgPrimary: "#1b2838",
       bgSecondary: "#2a475e",
-      bgTertiary: "rgba(7, 7, 7, 0.86)",
-      bgHover: "rgba(7, 7, 7, 0.86)",
-      bgContainer: "rgba(11,20,30,0.6)",
-      bgContainerGradient: "rgba(11, 20, 30, 0.85), #0b141e",
+      bgTertiary: "rgba(44, 79, 112, 0.86)",
+      bgHover: "rgba(68, 112, 153, 0.86)",
+      bgContainer: "rgba(40, 74, 102, 0.6)",
+      bgContainerGradient: "rgba(40, 74, 102, 0.85), #0b141e",
       accent: "#66c0f4",
       accentLight: "#a4d7f5",
       accentDark: "#4a9ece",
@@ -1152,11 +1152,11 @@
                 align-items: center;
                 justify-content: center;
                 align-self: center;
-                width: 32px;
-                height: 32px;
+                width: 36px;
+                height: 36px;
                 padding: 0;
                 border: 2px solid ${theme.border.replace("0.3", "0.5")};
-                border-radius: 8px;
+                border-radius: 4px;
                 background: ${theme.bgSecondary};
                 color: ${theme.text};
                 cursor: pointer;
@@ -5731,66 +5731,53 @@
       });
     }
 
-    // Store Header Button Logic (when not on app page)
-    const isAppPath = window.location.pathname.includes("/app/");
-    if (!isAppPath) {
-      const headerContainer = document.querySelector(
-        "._1wn1lBlAzl3HMRqS1llwie",
-      );
-      if (
-        headerContainer &&
-        !document.querySelector(".luatools-header-button") &&
-        !window.__LuaToolsHeaderInserted
-      ) {
-        ensureLuaToolsStyles();
-        const headerBtn = document.createElement("button");
-        headerBtn.type = "button";
-        headerBtn.className = "luatools-header-button Focusable";
-        headerBtn.tabIndex = "0";
-        headerBtn.title = "LuaTools Settings";
-        headerBtn.setAttribute("data-tooltip-text", "LuaTools Settings");
+    // Store Header Button Logic (always visible)
+    const headerContainer = document.querySelector("._1wn1lBlAzl3HMRqS1llwie");
+    if (
+      headerContainer &&
+      !document.querySelector(".luatools-header-button") &&
+      !window.__LuaToolsHeaderInserted
+    ) {
+      ensureLuaToolsStyles();
+      const headerBtn = document.createElement("button");
+      headerBtn.type = "button";
+      headerBtn.className = "luatools-header-button Focusable";
+      headerBtn.tabIndex = "0";
+      headerBtn.title = "LuaTools Settings";
+      headerBtn.setAttribute("data-tooltip-text", "LuaTools Settings");
 
-        const img = document.createElement("img");
-        img.style.height = "18px";
-        img.style.width = "18px";
-        img.style.verticalAlign = "middle";
+      const img = document.createElement("img");
+      img.style.height = "18px";
+      img.style.width = "18px";
+      img.style.verticalAlign = "middle";
 
-        try {
-          Millennium.callServerMethod("luatools", "GetIconDataUrl", {
-            contentScriptQuery: "",
-          }).then(function (res) {
-            try {
-              const payload = typeof res === "string" ? JSON.parse(res) : res;
-              if (payload && payload.success && payload.dataUrl) {
-                img.src = payload.dataUrl;
-              } else {
-                img.src = "LuaTools/luatools-icon.png";
-              }
-            } catch (_) {
-              img.src = "LuaTools/luatools-icon.png";
-            }
-          });
-        } catch (_) {
-          img.src = "LuaTools/luatools-icon.png";
-        }
+      img.onerror = function () {
+        // cogwheel fallback
+        headerBtn.innerHTML =
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="LuaTools"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm9.94 3.06l-2.12-.35a7.962 7.962 0 00-1.02-2.46l1.29-1.72a.75.75 0 00-.09-.97l-1.41-1.41a.75.75 0 00-.97-.09l-1.72 1.29c-.77-.44-1.6-.78-2.46-1.02L13.06 2.06A.75.75 0 0012.31 2h-1.62a.75.75 0 00-.75.65l-.35 2.12a7.962 7.962 0 00-2.46 1.02L5 4.6a.75.75 0 00-.97.09L2.62 6.1a.75.75 0 00-.09.97l1.29 1.72c-.44.77-.78 1.6-1.02 2.46l-2.12.35a.75.75 0 00-.65.75v1.62c0 .37.27.69.63.75l2.14.36c.24.86.58 1.69 1.02 2.46L2.53 18a.75.75 0 00.09.97l1.41 1.41c.26.26.67.29.97.09l1.72-1.29c.77.44 1.6.78 2.46 1.02l.35 2.12c.06.36.38.63.75.63h1.62c.37 0 .69-.27.75-.63l.36-2.14c.86-.24 1.69-.58 2.46-1.02l1.72 1.29c.3.2.71.17.97-.09l1.41-1.41c.26-.26.29-.67.09-.97l-1.29-1.72c.44-.77.78-1.6 1.02-2.46l2.12-.35c.36-.06.63-.38.63-.75v-1.62a.75.75 0 00-.65-.75z"/></svg>';
+      };
 
-        img.onerror = function () {
-          // cogwheel fallback
-          headerBtn.innerHTML =
-            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="LuaTools"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm9.94 3.06l-2.12-.35a7.962 7.962 0 00-1.02-2.46l1.29-1.72a.75.75 0 00-.09-.97l-1.41-1.41a.75.75 0 00-.97-.09l-1.72 1.29c-.77-.44-1.6-.78-2.46-1.02L13.06 2.06A.75.75 0 0012.31 2h-1.62a.75.75 0 00-.75.65l-.35 2.12a7.962 7.962 0 00-2.46 1.02L5 4.6a.75.75 0 00-.97.09L2.62 6.1a.75.75 0 00-.09.97l1.29 1.72c-.44.77-.78 1.6-1.02 2.46l-2.12.35a.75.75 0 00-.65.75v1.62c0 .37.27.69.63.75l2.14.36c.24.86.58 1.69 1.02 2.46L2.53 18a.75.75 0 00.09.97l1.41 1.41c.26.26.67.29.97.09l1.72-1.29c.77.44 1.6.78 2.46 1.02l.35 2.12c.06.36.38.63.75.63h1.62c.37 0 .69-.27.75-.63l.36-2.14c.86-.24 1.69-.58 2.46-1.02l1.72 1.29c.3.2.71.17.97-.09l1.41-1.41c.26-.26.29-.67.09-.97l-1.29-1.72c.44-.77.78-1.6 1.02-2.46l2.12-.35c.36-.06.63-.38.63-.75v-1.62a.75.75 0 00-.65-.75z"/></svg>';
-        };
+      img.src = "LuaTools/luatools-icon.png";
 
-        headerBtn.appendChild(img);
+      Millennium.callServerMethod("luatools", "GetIconDataUrl", {})
+        .then(function (res) {
+          const payload = typeof res === "string" ? JSON.parse(res) : res;
+          if (payload && payload.success && payload.dataUrl) {
+            img.src = payload.dataUrl;
+          }
+        })
+        .catch(function () {});
 
-        headerBtn.onclick = function (e) {
-          e.preventDefault();
-          showSettingsPopup();
-        };
+      headerBtn.appendChild(img);
 
-        headerContainer.appendChild(headerBtn);
-        window.__LuaToolsHeaderInserted = true;
-        backendLog("Inserted store header button (non-app page)");
-      }
+      headerBtn.onclick = function (e) {
+        e.preventDefault();
+        showSettingsPopup();
+      };
+
+      headerContainer.appendChild(headerBtn);
+      window.__LuaToolsHeaderInserted = true;
+      backendLog("Inserted store header button");
     }
 
     // Check if we're in Big Picture mode
