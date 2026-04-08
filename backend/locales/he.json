@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "השתמש בשפת Steam",
     "settings.useSteamLanguage.no": "לא",
     "settings.useSteamLanguage.yes": "כן",
-    "{fix} applied successfully!": "{fix} הוחל בהצלחה!"
+    "{fix} applied successfully!": "{fix} הוחל בהצלחה!",
+    "settings.morrenusApiKey.label": "מפתח API של מورנוס",
+    "settings.morrenusApiKey.description": "מפתח API נדרש לשימוש ב-Sadie Source. קבל אותו מ-{link}",
+    "settings.morrenusApiKey.placeholder": "הזן את מפתח ה-API שלך"
   }
 }

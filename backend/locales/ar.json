@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "استخدام لغة Steam",
     "settings.useSteamLanguage.no": "لا",
     "settings.useSteamLanguage.yes": "نعم",
-    "{fix} applied successfully!": "تم تطبيق {fix} بنجاح!"
+    "{fix} applied successfully!": "تم تطبيق {fix} بنجاح!",
+    "settings.morrenusApiKey.label": "مفتاح API مورينوس",
+    "settings.morrenusApiKey.description": "مفتاح API مطلوب لاستخدام مصدر سادي. احصل عليه من {link}",
+    "settings.morrenusApiKey.placeholder": "أدخل مفتاح API الخاص بك"
   }
 }

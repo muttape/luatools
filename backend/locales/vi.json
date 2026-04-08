@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Dùng ngôn ngữ của Steam",
     "settings.useSteamLanguage.no": "Không",
     "settings.useSteamLanguage.yes": "Có",
-    "{fix} applied successfully!": "Đã áp dụng {fix} thành công!"
+    "{fix} applied successfully!": "Đã áp dụng {fix} thành công!",
+    "settings.morrenusApiKey.label": "Khóa API Morrenus",
+    "settings.morrenusApiKey.description": "Cần khóa API để sử dụng Sadie Source. Lấy từ {link}",
+    "settings.morrenusApiKey.placeholder": "Nhập khóa API của bạn"
   }
 }

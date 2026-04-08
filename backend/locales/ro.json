@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Utilizați limba Steam",
     "settings.useSteamLanguage.no": "Nu",
     "settings.useSteamLanguage.yes": "Da",
-    "{fix} applied successfully!": "{fix} aplicat cu succes!"
+    "{fix} applied successfully!": "{fix} aplicat cu succes!",
+    "settings.morrenusApiKey.label": "Cheie API Morrenus",
+    "settings.morrenusApiKey.description": "Cheia API este necesară pentru a utiliza Sadie Source. Obțineți de la {link}",
+    "settings.morrenusApiKey.placeholder": "Introduceți cheia API"
   }
 }

@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Gunakan Bahasa Steam",
     "settings.useSteamLanguage.no": "Tidak",
     "settings.useSteamLanguage.yes": "Ya",
-    "{fix} applied successfully!": "{fix} berhasil diterapkan!"
+    "{fix} applied successfully!": "{fix} berhasil diterapkan!",
+    "settings.morrenusApiKey.label": "Kunci API Morrenus",
+    "settings.morrenusApiKey.description": "Kunci API diperlukan untuk menggunakan Sadie Source. Dapatkan dari {link}",
+    "settings.morrenusApiKey.placeholder": "Masukkan Kunci API Anda"
   }
 }

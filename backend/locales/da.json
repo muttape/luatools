@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Brug Steam-sprog",
     "settings.useSteamLanguage.no": "Nej",
     "settings.useSteamLanguage.yes": "Ja",
-    "{fix} applied successfully!": "{fix} anvendt!"
+    "{fix} applied successfully!": "{fix} anvendt!",
+    "settings.morrenusApiKey.label": "Morrenus API nøgle",
+    "settings.morrenusApiKey.description": "API nøgle kræves for at bruge Sadie Source. Få fra {link}",
+    "settings.morrenusApiKey.placeholder": "Indtast din API nøgle"
   }
 }

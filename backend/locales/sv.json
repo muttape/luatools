@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Använd Steam-språk",
     "settings.useSteamLanguage.no": "Nej",
     "settings.useSteamLanguage.yes": "Ja",
-    "{fix} applied successfully!": "{fix} tillämpades!"
+    "{fix} applied successfully!": "{fix} tillämpades!",
+    "settings.morrenusApiKey.label": "Morrenus API-nyckel",
+    "settings.morrenusApiKey.description": "API-nyckel krävs för att använda Sadie Source. Hämta från {link}",
+    "settings.morrenusApiKey.placeholder": "Ange din API-nyckel"
   }
 }

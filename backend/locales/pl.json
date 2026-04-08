@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Użyj języka Steam",
     "settings.useSteamLanguage.no": "Nie",
     "settings.useSteamLanguage.yes": "Tak",
-    "{fix} applied successfully!": "{fix} zostało pomyślnie zastosowane!"
+    "{fix} applied successfully!": "{fix} zostało pomyślnie zastosowane!",
+    "settings.morrenusApiKey.label": "Klucz API Morrenus",
+    "settings.morrenusApiKey.description": "Klucz API wymagany do korzystania z Sadie Source. Pobierz z {link}",
+    "settings.morrenusApiKey.placeholder": "Wprowadź swój klucz API"
   }
 }

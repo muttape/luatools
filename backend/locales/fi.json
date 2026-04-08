@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Käytä Steam-kieltä",
     "settings.useSteamLanguage.no": "Ei",
     "settings.useSteamLanguage.yes": "Kyllä",
-    "{fix} applied successfully!": "{fix} otettu käyttöön onnistuneesti!"
+    "{fix} applied successfully!": "{fix} otettu käyttöön onnistuneesti!",
+    "settings.morrenusApiKey.label": "Morrenus API-avain",
+    "settings.morrenusApiKey.description": "API-avain tarvitaan Sadie Sourcen käyttöön. Hanki osoitteesta {link}",
+    "settings.morrenusApiKey.placeholder": "Syötä API-avaimesi"
   }
 }

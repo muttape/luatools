@@ -220,6 +220,9 @@
     "settings.useSteamLanguage.label": "Χρήση Γλώσσας Steam",
     "settings.useSteamLanguage.no": "Όχι",
     "settings.useSteamLanguage.yes": "Ναι",
-    "{fix} applied successfully!": "Το {fix} εφαρμόστηκε επιτυχώς!"
+    "{fix} applied successfully!": "Το {fix} εφαρμόστηκε επιτυχώς!",
+    "settings.morrenusApiKey.label": "Κλειδί Morrenus API",
+    "settings.morrenusApiKey.description": "Το κλειδί API απαιτείται για τη χρήση της Sadie Source. Αποκτήστε το από το {link}",
+    "settings.morrenusApiKey.placeholder": "Εισαγάγετε το κλειδί API"
   }
 }
