@@ -109,3 +109,4 @@ readme
 .claude/settings.local.json
 CLAUDE.md
 scripts/fill_translations.py
+scripts/
