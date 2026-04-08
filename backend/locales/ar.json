@@ -221,8 +221,8 @@
     "settings.useSteamLanguage.no": "لا",
     "settings.useSteamLanguage.yes": "نعم",
     "{fix} applied successfully!": "تم تطبيق {fix} بنجاح!",
-    "settings.morrenusApiKey.label": "Morrenus API Key",
-    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
-    "settings.morrenusApiKey.placeholder": "Enter your API Key"
+    "settings.morrenusApiKey.label": "مفتاح API مورينوس",
+    "settings.morrenusApiKey.description": "مفتاح API مطلوب لاستخدام مصدر سادي. احصل عليه من {link}",
+    "settings.morrenusApiKey.placeholder": "أدخل مفتاح API الخاص بك"
   }
 }

@@ -221,8 +221,8 @@
     "settings.useSteamLanguage.no": "CAP",
     "settings.useSteamLanguage.yes": "YESSIR",
     "{fix} applied successfully!": "{fix} werkdeded!!! YAAAAAAAY GUD JERB ME SO SMAT!!!",
-    "settings.morrenusApiKey.label": "Morrenus API Key",
-    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
-    "settings.morrenusApiKey.placeholder": "Enter your API Key"
+    "settings.morrenusApiKey.label": "Mornus Key",
+    "settings.morrenusApiKey.description": "Key make Sadie go brrr. Get key at {link}",
+    "settings.morrenusApiKey.placeholder": "Smash key here"
   }
 }

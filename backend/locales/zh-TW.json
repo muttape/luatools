@@ -221,8 +221,8 @@
     "settings.useSteamLanguage.no": "否",
     "settings.useSteamLanguage.yes": "是",
     "{fix} applied successfully!": "{fix} 已成功套用！",
-    "settings.morrenusApiKey.label": "Morrenus API Key",
-    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
-    "settings.morrenusApiKey.placeholder": "Enter your API Key"
+    "settings.morrenusApiKey.label": "Morrenus API 金鑰",
+    "settings.morrenusApiKey.description": "使用 Sadie Source 需要 API 金鑰。從 {link} 取得",
+    "settings.morrenusApiKey.placeholder": "輸入您的 API 金鑰"
   }
 }

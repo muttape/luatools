@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+from datetime import date, timedelta
 from typing import List, Tuple
 
 from config import USER_AGENT
@@ -27,10 +28,54 @@ def _load_donated_appids() -> set:
         return set()
     try:
         with open(DONATED_APPIDS_FILE, "r", encoding="utf-8") as f:
-            return {line.strip() for line in f if line.strip()}
+            # Filter out the DATE: line if it exists
+            return {line.strip() for line in f if line.strip() and not line.startswith("DATE:")}
     except Exception as exc:
         logger.warn(f"LuaTools: Failed to read donated appids cache: {exc}")
         return set()
+
+
+def _check_cache_staleness() -> None:
+    """Check if the cache is older than 7 days and wipe it if so."""
+    today = date.today()
+
+    if not os.path.exists(DONATED_APPIDS_FILE):
+        # Initialize with today's date if it doesn't exist
+        os.makedirs(os.path.dirname(DONATED_APPIDS_FILE), exist_ok=True)
+        try:
+            with open(DONATED_APPIDS_FILE, "w", encoding="utf-8") as f:
+                f.write(f"DATE:{today.isoformat()}\n")
+        except Exception as exc:
+            logger.warn(f"LuaTools: Failed to initialize donated appids cache: {exc}")
+        return
+
+    try:
+        with open(DONATED_APPIDS_FILE, "r", encoding="utf-8") as f:
+            first_line = f.readline().strip()
+
+        if first_line.startswith("DATE:"):
+            try:
+                date_str = first_line.split("DATE:")[1]
+                cached_date = date.fromisoformat(date_str)
+                if today - cached_date >= timedelta(days=7):
+                    logger.log(
+                        f"LuaTools: Cache is {today - cached_date} old (since {cached_date}), "
+                        "wiping."
+                    )
+                    with open(DONATED_APPIDS_FILE, "w", encoding="utf-8") as f:
+                        f.write(f"DATE:{today.isoformat()}\n")
+            except (ValueError, IndexError):
+                # Invalid date format, treat as stale
+                logger.log("LuaTools: Cache date format invalid, wiping.")
+                with open(DONATED_APPIDS_FILE, "w", encoding="utf-8") as f:
+                    f.write(f"DATE:{today.isoformat()}\n")
+        else:
+            # File exists but no date header, treat as stale
+            logger.log("LuaTools: Cache missing date header, wiping.")
+            with open(DONATED_APPIDS_FILE, "w", encoding="utf-8") as f:
+                f.write(f"DATE:{today.isoformat()}\n")
+    except Exception as exc:
+        logger.warn(f"LuaTools: Failed to check cache staleness: {exc}")
 
 
 def _save_donated_appids(appids: set) -> None:
@@ -195,6 +240,9 @@ def send_donation_keys(pairs: List[Tuple[str, str]]) -> bool:
     if not pairs:
         logger.log("LuaTools: No keys to donate")
         return False
+
+    # Check for cache staleness and re-donate if necessary
+    _check_cache_staleness()
 
     already_donated = _load_donated_appids()
     new_pairs = [(appid, key) for appid, key in pairs if appid not in already_donated]

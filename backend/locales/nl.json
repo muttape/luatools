@@ -221,8 +221,8 @@
     "settings.useSteamLanguage.no": "Nee",
     "settings.useSteamLanguage.yes": "Ja",
     "{fix} applied successfully!": "{fix} succesvol toegepast!",
-    "settings.morrenusApiKey.label": "Morrenus API Key",
-    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
-    "settings.morrenusApiKey.placeholder": "Enter your API Key"
+    "settings.morrenusApiKey.label": "Morrenus API-sleutel",
+    "settings.morrenusApiKey.description": "API-sleutel vereist voor Sadie Source. Verkrijg via {link}",
+    "settings.morrenusApiKey.placeholder": "Voer uw API-sleutel in"
   }
 }

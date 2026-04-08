@@ -221,8 +221,8 @@
     "settings.useSteamLanguage.no": "いいえ",
     "settings.useSteamLanguage.yes": "はい",
     "{fix} applied successfully!": "{fix}が正常に適用されました！",
-    "settings.morrenusApiKey.label": "Morrenus API Key",
-    "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
-    "settings.morrenusApiKey.placeholder": "Enter your API Key"
+    "settings.morrenusApiKey.label": "Morrenus APIキー",
+    "settings.morrenusApiKey.description": "Sadie Sourceを使用するにはAPIキーが必要です。{link}から入手してください",
+    "settings.morrenusApiKey.placeholder": "APIキーを入力してください"
   }
 }

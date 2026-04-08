@@ -3738,6 +3738,8 @@
           return "settings.useSteamLanguage.label";
         if (optionKey === "donateKeys") return "settings.donateKeys.label";
         if (optionKey === "theme") return "settings.theme.label";
+        if (optionKey === "fastDownload") return "settings.fastDownload.label";
+        if (optionKey === "morrenusApiKey") return "settings.morrenusApiKey.label";
       }
       return null;
     }
@@ -3750,6 +3752,18 @@
         if (optionKey === "donateKeys")
           return "settings.donateKeys.description";
         if (optionKey === "theme") return "settings.theme.description";
+        if (optionKey === "fastDownload")
+          return "settings.fastDownload.description";
+        if (optionKey === "morrenusApiKey")
+          return "settings.morrenusApiKey.description";
+      }
+      return null;
+    }
+
+    function optionPlaceholderKey(groupKey, optionKey) {
+      if (groupKey === "general") {
+        if (optionKey === "morrenusApiKey")
+          return "settings.morrenusApiKey.placeholder";
       }
       return null;
     }
@@ -3870,13 +3884,21 @@
               option.description,
             );
 
-            // Special handling for manifest.morrenus.xyz link
-            if (descTextVal.includes("manifest.morrenus.xyz")) {
+            // Special handling for Morrenus link
+            if (
+              descTextVal.includes("manifest.morrenus.xyz") ||
+              descTextVal.includes("{link}")
+            ) {
               const url = "https://manifest.morrenus.xyz";
-              descTextVal = descTextVal.replace(
-                "manifest.morrenus.xyz",
-                `<a href="${url}" id="lt-morrenus-link" style="color:${optDescColors.accent};text-decoration:underline;">manifest.morrenus.xyz</a>`,
-              );
+              const linkHtml = `<a href="${url}" id="lt-morrenus-link" style="color:${optDescColors.accent};text-decoration:underline;">manifest.morrenus.xyz</a>`;
+              if (descTextVal.includes("{link}")) {
+                descTextVal = descTextVal.replace("{link}", linkHtml);
+              } else {
+                descTextVal = descTextVal.replace(
+                  "manifest.morrenus.xyz",
+                  linkHtml,
+                );
+              }
               optionDesc.innerHTML = descTextVal;
 
               // Add event listener after appending to document or wait?
@@ -4088,10 +4110,13 @@
               textInput.type =
                 option.key === "morrenusApiKey" ? "password" : "text";
               const textColors = getThemeColors();
-              const placeholder =
+              const placeholderKey = optionPlaceholderKey(group.key, option.key);
+              const placeholder = t(
+                placeholderKey || "",
                 option.metadata && option.metadata.placeholder
                   ? String(option.metadata.placeholder)
-                  : "";
+                  : "",
+              );
               textInput.placeholder = placeholder;
               textInput.style.cssText = `width:180px !important;padding:7px 12px !important;background:${textColors.bgTertiary} !important;color:${textColors.text} !important;border:1px solid ${textColors.border} !important;border-radius:6px !important;font-size:13px !important;box-sizing:border-box !important;transition:border-color 0.2s ease, box-shadow 0.2s ease;`;
 
