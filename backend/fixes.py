@@ -21,21 +21,18 @@ FIX_DOWNLOAD_LOCK = threading.Lock()
 UNFIX_STATE: Dict[int, Dict[str, Any]] = {}
 UNFIX_LOCK = threading.Lock()
 
-# ── Fixes index cache (avoids HEAD requests to R2) ──────────────────────
+# ── Fixes index cache (fetched once at startup, cached for session) ──────
 FIXES_INDEX_URL = "https://index.luatools.work/fixes-index.json"
 _fixes_index_lock = threading.Lock()
 _fixes_index_cache: Optional[Dict] = None
-_fixes_index_fetched_at: float = 0
-_FIXES_INDEX_TTL = 300  # seconds (5 min)
 
 
 def _fetch_fixes_index() -> Optional[Dict]:
     """Fetch and cache the fixes index JSON. Returns None on failure."""
-    global _fixes_index_cache, _fixes_index_fetched_at
-    now = time.time()
+    global _fixes_index_cache
 
     with _fixes_index_lock:
-        if _fixes_index_cache is not None and (now - _fixes_index_fetched_at) < _FIXES_INDEX_TTL:
+        if _fixes_index_cache is not None:
             return _fixes_index_cache
 
     # Fetch outside the lock to avoid blocking other threads
@@ -49,7 +46,6 @@ def _fetch_fixes_index() -> Optional[Dict]:
             index = {"generic": generic_set, "online": online_set}
             with _fixes_index_lock:
                 _fixes_index_cache = index
-                _fixes_index_fetched_at = time.time()
             logger.log(f"LuaTools: Fixes index loaded ({len(generic_set)} generic, {len(online_set)} online)")
             return index
         else:
@@ -57,9 +53,12 @@ def _fetch_fixes_index() -> Optional[Dict]:
     except Exception as exc:
         logger.warn(f"LuaTools: Failed to fetch fixes index: {exc}")
 
-    # Return stale cache if available
-    with _fixes_index_lock:
-        return _fixes_index_cache
+    return None
+
+
+def init_fixes_index() -> None:
+    """Pre-fetch fixes index at startup. Called once during Plugin._load()."""
+    _fetch_fixes_index()
 
 
 def _is_safe_path(base_path: str, target_path: str) -> bool:
