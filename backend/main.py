@@ -25,6 +25,7 @@ from auto_update import (
 from config import WEBKIT_DIR_NAME, WEB_UI_ICON_FILE, WEB_UI_JS_FILE
 from downloads import (
     cancel_add_via_luatools,
+    check_apis_for_app,
     delete_luatools_for_app,
     dismiss_loaded_apps,
     get_add_status,
@@ -35,6 +36,7 @@ from downloads import (
     init_applist,
     read_loaded_apps,
     start_add_via_luatools,
+    start_add_via_luatools_from_url,
 )
 from fixes import (
     apply_game_fix,
@@ -43,6 +45,7 @@ from fixes import (
     get_apply_fix_status,
     get_installed_fixes,
     get_unfix_status,
+    init_fixes_index,
     unfix_game,
 )
 from utils import ensure_temp_download_dir
@@ -174,6 +177,43 @@ def GetApiList(contentScriptQuery: str = "") -> str:
 
 def CancelAddViaLuaTools(appid: int, contentScriptQuery: str = "") -> str:
     return cancel_add_via_luatools(appid)
+
+
+def CheckApisForApp(appid: int, contentScriptQuery: str = "") -> str:
+    return check_apis_for_app(appid)
+
+
+MORRENUS_STATS_CACHE = {}
+
+def GetMorrenusStats(api_key: str, force_refresh: bool = False, contentScriptQuery: str = "", **kwargs: Any) -> str:
+    import time
+    global MORRENUS_STATS_CACHE
+    
+    if "force_refresh" in kwargs:
+        force_refresh = bool(kwargs["force_refresh"])
+
+    now = time.time()
+    
+    if not force_refresh:
+        cached = MORRENUS_STATS_CACHE.get(api_key)
+        if cached and (now - cached["time"] < 600):
+            return cached["data"]
+
+    try:
+        from http_client import ensure_http_client
+        client = ensure_http_client("LuaTools: GetMorrenusStats")
+        resp = client.get(f"https://manifest.morrenus.xyz/api/v1/user/stats?api_key={api_key}", follow_redirects=True, timeout=10)
+        data = resp.text
+        if resp.status_code == 200:
+            MORRENUS_STATS_CACHE[api_key] = {"time": now, "data": data}
+        return data
+    except Exception as exc:
+        logger.warn(f"LuaTools: GetMorrenusStats failed: {exc}")
+        return json.dumps({"error": str(exc)})
+
+
+def StartAddViaLuaToolsFromUrl(appid: int, url: str, apiName: str, contentScriptQuery: str = "") -> str:
+    return start_add_via_luatools_from_url(appid, url, apiName)
 
 
 def GetIconDataUrl(contentScriptQuery: str = "") -> str:
@@ -456,6 +496,11 @@ class Plugin:
             init_applist()
         except Exception as exc:
             logger.warn(f"LuaTools: Applist initialization failed: {exc}")
+
+        try:
+            init_fixes_index()
+        except Exception as exc:
+            logger.warn(f"LuaTools: Fixes index initialization failed: {exc}")
 
         _copy_webkit_files()
         _inject_webkit_files()

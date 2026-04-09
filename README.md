@@ -35,4 +35,3 @@ git remote set-url --push upstream DISABLE
 ## Credits
 
 - Original repo: https://github.com/madoiscool/ltsteamplugin
-- Discord: https://discord.gg/luatools

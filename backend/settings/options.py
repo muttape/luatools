@@ -63,6 +63,14 @@ SETTINGS_GROUPS: List[SettingGroup] = [
                 metadata={"dynamicChoices": "themes"},
             ),
             SettingOption(
+                key="fastDownload",
+                label="Fast Download",
+                option_type="toggle",
+                description="Automatically choose the first available source when adding a game.",
+                default=True,
+                metadata={"yesLabel": "Yes", "noLabel": "No"},
+            ),
+            SettingOption(
                 key="morrenusApiKey",
                 label="Morrenus API Key",
                 option_type="text",
