@@ -1,0 +1,20 @@
+{
+  "name": "luatools",
+  "version": "107.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build": "millennium-ttc --build prod && node scripts/build-plugin.mjs",
+    "build:zip": "pnpm run build && node scripts/build-plugin.mjs --zip",
+    "dev": "millennium-ttc --build dev"
+  },
+  "devDependencies": {
+    "@steambrew/api": "^5.5.3",
+    "@steambrew/client": "^5.5.3",
+    "@steambrew/webkit": "^5.5.3",
+    "@steambrew/ttc": "^3.2.6",
+    "prettier": "^3.8.1"
+  }
+}
