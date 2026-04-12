@@ -6,8 +6,9 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "millennium-ttc --build prod && node scripts/build-plugin.mjs",
-    "build:zip": "pnpm run build && node scripts/build-plugin.mjs --zip",
+    "build": "pnpm run build:millennium && pnpm run build:zip",
+    "build:millennium": "millennium-ttc --build prod && node scripts/build-plugin.mjs",
+    "build:zip": "node scripts/build-plugin.mjs --zip",
     "dev": "millennium-ttc --build dev"
   },
   "devDependencies": {
