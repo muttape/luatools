@@ -133,7 +133,7 @@ def _fetch_github_latest(cfg: Dict[str, Any]) -> Dict[str, Any]:
         pass
 
     if not zip_url and tag_name:
-        zip_url = f"https://luatools.vercel.app/api/get-plugin/{tag_name}"
+        zip_url = f"https://github.com/muttape/luatools/releases/download/{tag_name}/luatools.zip"
         logger.log(f"AutoUpdate: Using proxy download URL: {zip_url}")
 
     if not zip_url:
