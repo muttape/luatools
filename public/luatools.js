@@ -3671,7 +3671,6 @@
         if (optionKey === "language") return "settings.language.label";
         if (optionKey === "useSteamLanguage")
           return "settings.useSteamLanguage.label";
-        if (optionKey === "donateKeys") return "settings.donateKeys.label";
         if (optionKey === "theme") return "settings.theme.label";
         if (optionKey === "fastDownload") return "settings.fastDownload.label";
         if (optionKey === "morrenusApiKey")
@@ -3685,8 +3684,6 @@
         if (optionKey === "language") return "settings.language.description";
         if (optionKey === "useSteamLanguage")
           return "settings.useSteamLanguage.description";
-        if (optionKey === "donateKeys")
-          return "settings.donateKeys.description";
         if (optionKey === "theme") return "settings.theme.description";
         if (optionKey === "fastDownload")
           return "settings.fastDownload.description";
