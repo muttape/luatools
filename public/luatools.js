@@ -6355,20 +6355,18 @@
                       }
                     } catch (e) {}
 
-                    if (available.length === 1 || isFastDownload) {
-                      // Only one source or fast download enabled, proceed automatically with the first available
+                    if (isFastDownload) {
+                      // Only fast download should auto-select a source.
                       const source = available[0];
                       backendLog(
                         "LuaTools: Auto-selecting " +
-                          (available.length === 1
-                            ? "only source"
-                            : "source via fast download") +
+                          "source via fast download" +
                           ": " +
                           source.name,
                       );
                       startDirectDownload(appid, source.url, source.name);
                     } else {
-                      // Multiple sources, let user select
+                      // Always let the user choose when fast download is disabled.
                       showSourceSelectionModal(appid, available);
                     }
                   } catch (err) {
