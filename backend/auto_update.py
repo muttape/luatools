@@ -65,7 +65,7 @@ def apply_pending_update_if_any() -> str:
 def _fetch_github_latest(cfg: Dict[str, Any]) -> Dict[str, Any]:
     owner = str(cfg.get("owner", "")).strip()
     repo = str(cfg.get("repo", "")).strip()
-    asset_name = str(cfg.get("asset_name", "ltsteamplugin.zip")).strip()
+    asset_name = str(cfg.get("asset_name", "LuaTools.zip")).strip()
     tag = str(cfg.get("tag", "")).strip()
     tag_prefix = str(cfg.get("tag_prefix", "")).strip()
     token = str(cfg.get("token", "")).strip()
