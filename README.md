@@ -15,8 +15,9 @@ $ pnpm install
 
 ## How to build
 
-- `pnpm run build` — Copy required files in `dist/luatools`.
-- `pnpm run build:zip` — Same as build but also create `dist/luatools.zip`.
+- `pnpm run build:millennium` — Millennium build & copy required files in `dist/luatools`.
+- `pnpm run build:zip` — Create compressed plugin as `dist/luatools.zip`.
+- `pnpm run build` — Run both `build:millennium` & `build:zip`
 - `pnpm run dev` — Live development
 
 ## How to clone
