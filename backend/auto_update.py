@@ -20,7 +20,6 @@ from config import (
 from http_client import ensure_http_client, get_http_client
 from logger import logger
 from paths import backend_path, get_plugin_dir
-from steam_utils import detect_steam_install_path
 from utils import (
     get_plugin_version,
     parse_version,
@@ -253,31 +252,8 @@ def _start_periodic_update_checks():
 
 
 def _check_and_donate_keys() -> None:
-    """Check donateKeys setting and send keys if enabled."""
-    try:
-        from donate_keys import extract_valid_decryption_keys, send_donation_keys
-        from settings.manager import _get_values_locked
-        
-        values = _get_values_locked()
-        general = values.get("general", {})
-        donate_keys_enabled = general.get("donateKeys", False)
-        
-        if not donate_keys_enabled:
-            return
-        
-        steam_path = detect_steam_install_path()
-        if not steam_path:
-            logger.warn("LuaTools: Cannot donate keys - Steam path not found")
-            return
-        
-        pairs = extract_valid_decryption_keys(steam_path)
-        if pairs:
-            send_donation_keys(pairs)
-        else:
-            logger.log("LuaTools: No valid keys found to donate")
-            
-    except Exception as exc:
-        logger.warn(f"LuaTools: Donate keys check failed: {exc}")
+    """Disabled in this fork: upstream donate-keys flow must stay off."""
+    return
 
 
 def _start_initial_check_worker():
@@ -293,7 +269,7 @@ def _start_initial_check_worker():
         else:
             _start_periodic_update_checks()
         
-        # Check and donate keys after update check completes
+        # Keep the upstream hook in place, but disabled in this fork.
         _check_and_donate_keys()
     except Exception as exc:
         logger.warn(f"AutoUpdate: background check failed: {exc}")
@@ -349,4 +325,3 @@ __all__ = [
     "restart_steam_internal",
     "start_auto_update_background_check",
 ]
-

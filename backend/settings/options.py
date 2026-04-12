@@ -47,14 +47,6 @@ SETTINGS_GROUPS: List[SettingGroup] = [
                 metadata={"dynamicChoices": "locales"},
             ),
             SettingOption(
-                key="donateKeys",
-                label="Donate Keys",
-                option_type="toggle",
-                description="Allow LuaTools to donate spare Steam keys. (placeholder option)",
-                default=True,
-                metadata={"yesLabel": "Yes", "noLabel": "No"},
-            ),
-            SettingOption(
                 key="theme",
                 label="Theme",
                 option_type="select",
@@ -139,4 +131,3 @@ def merge_defaults_with_values(values: Optional[Dict[str, Any]]) -> Dict[str, An
         merged[group_key] = merged_group
 
     return merged
-
