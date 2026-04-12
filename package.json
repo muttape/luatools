@@ -1,6 +1,6 @@
 {
   "name": "luatools",
-  "version": "107.1.0",
+  "version": "107.2.1",
   "private": true,
   "type": "module",
   "scripts": {

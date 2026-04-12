@@ -4,7 +4,7 @@
   "name": "luatools",
   "common_name": "LuaTools",
   "description": "Manage Steam games with LuaTools",
-  "version": "107.1",
+  "version": "107.2.1",
   "useBackend": true,
   "backend": "backend",
   "include": ["public"]
