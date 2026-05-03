@@ -81,6 +81,7 @@
     "Loading APIs...": "Loading APIs...",
     "Loading fixes...": "Loading fixes...",
     "Look for Fixes": "Look for Fixes",
+    "LuaTools Settings": "LuaTools Settings",
     "LuaTools backend unavailable": "LuaTools backend unavailable",
     "LuaTools · AIO Fixes Menu": "LuaTools · AIO Fixes Menu",
     "LuaTools · Added Games": "LuaTools · Added Games",
@@ -133,12 +134,6 @@
     "common.translationMissing": "translation missing",
     "common.warning": "Warning",
     "days left": "days left",
-    "disclaimer.inputLabel": "type \"I Understand\" in the box bellow to continue",
-    "disclaimer.inputPlaceholder": "I Understand",
-    "disclaimer.line1": "LuaTools is not affiliated in any way with Millennium",
-    "disclaimer.line2": "Millennium will NOT offer support for this plugin on their channels.",
-    "disclaimer.line3": "Do not ask for support for this plugin in Millennium servers.",
-    "disclaimer.title": "Important Notice",
     "gameStatus.denuvo": "Denuvo",
     "gameStatus.needsFixes": "Fix Available",
     "gameStatus.playable": "Playable",
@@ -194,8 +189,8 @@
     "settings.language.option.en": "English",
     "settings.language.option.pt-BR": "Brazilian Portuguese",
     "settings.loading": "Loading settings...",
-    "settings.morrenusApiKey.label": "Morrenus API Key",
     "settings.morrenusApiKey.description": "API Key required to use Sadie Source. Get from {link}",
+    "settings.morrenusApiKey.label": "Morrenus API Key",
     "settings.morrenusApiKey.placeholder": "Enter your API Key",
     "settings.noChanges": "No changes to save.",
     "settings.refresh": "Refresh",
@@ -215,7 +210,6 @@
     "settings.useSteamLanguage.label": "Use Steam Language",
     "settings.useSteamLanguage.no": "No",
     "settings.useSteamLanguage.yes": "Yes",
-    "{fix} applied successfully!": "{fix} applied successfully!",
-    "LuaTools Settings": "LuaTools Settings"
+    "{fix} applied successfully!": "{fix} applied successfully!"
   }
 }
